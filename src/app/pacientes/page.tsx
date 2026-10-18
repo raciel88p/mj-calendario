@@ -21,6 +21,8 @@ import {
   FileSignature,
   Camera,
   X,
+  BadgeCheck,
+  Building,
 } from 'lucide-react';
 
 export default function PacientesPage() {
@@ -47,6 +49,7 @@ export default function PacientesPage() {
   const [allergies, setAllergies] = useState('');
   const [notes, setNotes] = useState('');
   const [hasMembership, setHasMembership] = useState(false);
+  const [creditEnabled, setCreditEnabled] = useState(false);
   const [crmStage, setCrmStage] = useState<Patient['crmStage']>('Nuevo Lead');
 
   // Excel Import text area / CSV parser
@@ -88,6 +91,7 @@ export default function PacientesPage() {
     setAllergies('');
     setNotes('');
     setHasMembership(false);
+    setCreditEnabled(false);
     setCrmStage('Nuevo Lead');
     setIsModalOpen(true);
   };
@@ -111,6 +115,7 @@ export default function PacientesPage() {
                 allergies,
                 notes,
                 hasMembership,
+                creditEnabled,
                 crmStage,
               }
             : p
@@ -131,6 +136,7 @@ export default function PacientesPage() {
         notes,
         consent: true,
         hasMembership,
+        creditEnabled,
         crmStage,
         createdAt: new Date().toISOString(),
       };
@@ -164,6 +170,7 @@ export default function PacientesPage() {
           residence: residenceVal || 'San José',
           consent: true,
           hasMembership: membershipVal?.toLowerCase() === 'si' || membershipVal?.toLowerCase() === 'true',
+          creditEnabled: true,
           crmStage: 'Nuevo Lead',
           createdAt: new Date().toISOString(),
         });
@@ -198,7 +205,7 @@ export default function PacientesPage() {
             Directorio de Clientes & Pacientes
           </h1>
           <p className="text-sm text-gray-500 mt-0.5">
-            Gestión completa de expediente, consentimiento firmado digital, fotos Antes/Después e importación Excel.
+            Gestión completa de expediente, habilitación de crédito a la empresa, consentimiento digital e importación Excel.
           </p>
         </div>
 
@@ -274,9 +281,20 @@ export default function PacientesPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-gray-800 text-sm uppercase">{p.fullName}</h3>
-                  <span className="text-[11px] px-2 py-0.5 rounded-full font-bold bg-blue-50 text-blue-600">
-                    {p.crmStage}
-                  </span>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-blue-50 text-blue-600">
+                      {p.crmStage}
+                    </span>
+                    {p.creditEnabled ? (
+                      <span className="text-[10px] px-2 py-0.5 rounded-full font-extrabold bg-emerald-100 text-emerald-800 flex items-center gap-1">
+                        <Building className="w-2.5 h-2.5" /> Crédito OK
+                      </span>
+                    ) : (
+                      <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-gray-100 text-gray-500">
+                        Sin Crédito
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -360,6 +378,7 @@ export default function PacientesPage() {
                   setAllergies(p.allergies || '');
                   setNotes(p.notes || '');
                   setHasMembership(p.hasMembership || false);
+                  setCreditEnabled(p.creditEnabled || false);
                   setCrmStage(p.crmStage);
                   setIsModalOpen(true);
                 }}
@@ -447,6 +466,23 @@ export default function PacientesPage() {
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-pink-500"
                   />
                 </div>
+              </div>
+
+              {/* Habilitar Crédito Checkbox */}
+              <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Building className="w-5 h-5 text-emerald-600" />
+                  <div>
+                    <span className="text-xs font-bold text-gray-800">Habilitar Crédito a la Empresa</span>
+                    <p className="text-[11px] text-gray-500">Permite facturación a crédito y abonos diferidos.</p>
+                  </div>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={creditEnabled}
+                  onChange={(e) => setCreditEnabled(e.target.checked)}
+                  className="w-5 h-5 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                />
               </div>
 
               {/* Membresía MJ Checkbox */}

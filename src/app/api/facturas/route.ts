@@ -114,3 +114,19 @@ export async function PUT(request: Request) {
     return NextResponse.json({ success: false, error: 'Error registrando el abono' }, { status: 500 });
   }
 }
+
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json({ success: false, error: 'ID de factura requerido' }, { status: 400 });
+    }
+
+    invoicesMemory = invoicesMemory.filter((inv) => inv.id !== id);
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    return NextResponse.json({ success: false, error: 'Error al eliminar la factura' }, { status: 500 });
+  }
+}

@@ -12,6 +12,7 @@ export interface Patient {
   notes?: string;
   consent: boolean;
   hasMembership: boolean; // Membresía MJ
+  creditEnabled?: boolean; // Habilitar crédito a la empresa
   crmStage: 'Nuevo Lead' | 'Contactado' | 'Cita Agendada' | 'Cliente Fidelizado' | 'Inactivo';
   sourceChannel?: 'WhatsApp' | 'Messenger' | 'Instagram' | 'Formulario Web' | 'Otro';
   createdAt: string;

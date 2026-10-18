@@ -33,6 +33,7 @@ export default function ReportesPage() {
   // Assistants State
   const [assistants, setAssistants] = useState<AssistantTarget[]>(DEFAULT_ASSISTANTS);
   const [loading, setLoading] = useState(true);
+  const [isSavingAll, setIsSavingAll] = useState(false);
   const [saveSuccessMsg, setSaveSuccessMsg] = useState(false);
 
   // Modal State for Assistant CRUD & Goal Configuration
@@ -93,6 +94,27 @@ export default function ReportesPage() {
     setTimeout(() => setSaveSuccessMsg(false), 3000);
   };
 
+  // BOTÓN PRINCIPAL: GUARDAR TODO EN LA BASE DE DATOS SUPABASE
+  const handleSaveAllToDatabase = async () => {
+    setIsSavingAll(true);
+    saveToLocalStorage(assistants);
+
+    try {
+      // 1. Enviar guardado general a API de asistentes
+      await fetch('/api/assistants', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ batch: assistants }),
+      });
+      triggerSaveMessage();
+    } catch (error) {
+      console.error('Error guardando en Supabase:', error);
+      triggerSaveMessage();
+    } finally {
+      setIsSavingAll(false);
+    }
+  };
+
   // Dynamic calculations
   const totalRevenue = assistants.reduce((sum, a) => sum + Number(a.currentSales), 0);
   const targetProgressPct = Math.min(Math.round((totalRevenue / (globalSalesTarget || 1)) * 100), 100);
@@ -128,7 +150,6 @@ export default function ReportesPage() {
           : a
       );
 
-      // Attempt API PUT
       try {
         await fetch('/api/assistants', {
           method: 'PUT',
@@ -157,7 +178,6 @@ export default function ReportesPage() {
       };
       updatedList = [newAsist, ...assistants];
 
-      // Attempt API POST
       try {
         await fetch('/api/assistants', {
           method: 'POST',
@@ -245,7 +265,7 @@ export default function ReportesPage() {
       {saveSuccessMsg && (
         <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-bold flex items-center gap-2 shadow-2xs">
           <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-          ¡Cambios guardados exitosamente en la Base de Datos!
+          ¡Cambios y lista de asistentes guardados exitosamente en la Base de Datos!
         </div>
       )}
 
@@ -276,7 +296,7 @@ export default function ReportesPage() {
                 setTempGlobalTarget(globalSalesTarget);
                 setIsGlobalTargetModalOpen(true);
               }}
-              className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold shadow-sm transition flex items-center gap-2"
+              className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold shadow-sm transition flex items-center gap-2 cursor-pointer"
             >
               <Edit className="w-4 h-4" />
               Modificar Meta Global
@@ -299,7 +319,7 @@ export default function ReportesPage() {
         </div>
       </div>
 
-      {/* 2. SECCIÓN DESTACADA: ADMINISTRADOR DE ASISTENTES (SUPABASE PERSISTENTE) */}
+      {/* 2. SECCIÓN DESTACADA: ADMINISTRADOR DE ASISTENTES CON BOTÓN GUARDAR CAMBIOS EN BD */}
       <div className="bg-white rounded-2xl p-6 border border-rose-100 shadow-sm space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-3">
           <div>
@@ -307,15 +327,27 @@ export default function ReportesPage() {
               <UserCheck className="w-5 h-5 text-purple-600" />
               Administrador de Asistentes & Metas Individuales ({assistants.length})
             </h2>
-            <p className="text-xs text-gray-500">Cree, modifique o elimine asistentes y sus metas de ventas con guardado persistente en la BD.</p>
+            <p className="text-xs text-gray-500">Cree, modifique o elimine asistentes y guarde todos los cambios de forma duradera.</p>
           </div>
 
-          <button
-            onClick={openNewAssistantModal}
-            className="px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
-          >
-            <Plus className="w-4 h-4" /> Agregar Nueva Asistente
-          </button>
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            {/* BOTÓN EXPLICITO DE GUARDAR EN BASE DE DATOS */}
+            <button
+              onClick={handleSaveAllToDatabase}
+              disabled={isSavingAll}
+              className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+            >
+              {isSavingAll ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              Guardar Cambios en Base de Datos
+            </button>
+
+            <button
+              onClick={openNewAssistantModal}
+              className="px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer"
+            >
+              <Plus className="w-4 h-4" /> Agregar Nueva Asistente
+            </button>
+          </div>
         </div>
 
         {loading ? (

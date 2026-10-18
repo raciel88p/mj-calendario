@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { initialPatients, initialAppointments, buildWhatsAppLink } from '@/lib/data';
+import { initialPatients, buildWhatsAppLink } from '@/lib/data';
 import {
   Receipt,
   Search,
@@ -21,6 +21,8 @@ import {
   Check,
   X,
   Printer,
+  Trash2,
+  AlertTriangle,
 } from 'lucide-react';
 
 interface Invoice {
@@ -97,42 +99,6 @@ const INITIAL_INVOICES: Invoice[] = [
     paymentMethod: 'Tarjeta Crédito',
     serviceName: 'Tratamiento Láser Diodo',
   },
-  {
-    id: 'inv-871',
-    docNumber: '871',
-    docType: 'Factura electrónica',
-    patientName: 'UREÑA ZUÑIGA STEPHANIE',
-    cedula: '1-1122-3344',
-    email: 'stephanie.urena@correo.com',
-    phone: '+506 8555-4444',
-    date: '13 OCT. 2026',
-    time: '04:00 PM',
-    paymentStatus: 'Por Pagar',
-    haciendaStatus: 'Aceptado',
-    emailSent: true,
-    totalAmount: 36723.87,
-    balancePending: 11723.87,
-    paymentMethod: 'Efectivo',
-    serviceName: 'Peeling Químico',
-  },
-  {
-    id: 'inv-870',
-    docNumber: '870',
-    docType: 'Factura electrónica',
-    patientName: 'ALVAREZ GOMEZ ALEJANDRA MARCELA',
-    cedula: '2-0555-0888',
-    email: 'marcela.alvarez@correo.com',
-    phone: '+506 8444-5555',
-    date: '10 OCT. 2026',
-    time: '09:00 AM',
-    paymentStatus: 'Pagada',
-    haciendaStatus: 'Aceptado',
-    emailSent: true,
-    totalAmount: 36764.55,
-    balancePending: 0.0,
-    paymentMethod: 'SINPE Móvil',
-    serviceName: 'Hidratación Facial con Ácido Hialurónico',
-  },
 ];
 
 export default function FacturasPage() {
@@ -158,8 +124,9 @@ export default function FacturasPage() {
   const [abonoAmount, setAbonoAmount] = useState(10000);
   const [abonoMethod, setAbonoMethod] = useState<Invoice['paymentMethod']>('SINPE Móvil');
 
-  // Success Notification State
+  // Error & Notification State
   const [emailNotification, setEmailNotification] = useState<string | null>(null);
+  const [creditErrorMessage, setCreditErrorMessage] = useState<string | null>(null);
 
   const filteredInvoices = invoices.filter((inv) => {
     const matchesDoc =
@@ -183,14 +150,26 @@ export default function FacturasPage() {
 
   const handleCreateInvoice = (e: React.FormEvent) => {
     e.preventDefault();
+    setCreditErrorMessage(null);
+
     const patient = initialPatients.find((p) => p.id === selectedPatientId) || {
       fullName: 'CLIENTE GENERAL',
       cedula: '1-0000-0000',
       email: 'cliente@ejemplo.com',
       phone: '+506 8888-8888',
+      creditEnabled: false,
     };
 
     const pending = Math.max(0, totalAmount - abonoInitial);
+
+    // CHECK: If invoice has credit/pending balance, verify patient credit status
+    if (pending > 0 && !patient.creditEnabled) {
+      setCreditErrorMessage(
+        `⛔ No se puede facturar a crédito: El paciente "${patient.fullName}" NO tiene el check de "Habilitar Crédito a la Empresa" activado en la sección de Pacientes.`
+      );
+      return;
+    }
+
     const newDocNum = (Number(invoices[0]?.docNumber || 874) + 1).toString();
 
     const newInv: Invoice = {
@@ -215,9 +194,19 @@ export default function FacturasPage() {
     setInvoices([newInv, ...invoices]);
     setIsModalOpen(false);
 
-    // Auto trigger email notification simulation
     setEmailNotification(`Factura #${newDocNum} generada y enviada a ${patient.email}`);
     setTimeout(() => setEmailNotification(null), 4000);
+  };
+
+  const handleDeleteInvoice = async (id: string) => {
+    setInvoices(invoices.filter((inv) => inv.id !== id));
+    try {
+      await fetch(`/api/facturas?id=${id}`, { method: 'DELETE' });
+    } catch (e) {
+      console.error(e);
+    }
+    setEmailNotification(`Factura eliminada del sistema con éxito.`);
+    setTimeout(() => setEmailNotification(null), 3000);
   };
 
   const handleRegisterAbono = (e: React.FormEvent) => {
@@ -254,12 +243,15 @@ export default function FacturasPage() {
             Módulo de Facturación & Pagos de Servicios
           </h1>
           <p className="text-sm text-gray-500 mt-0.5">
-            Registro de abonos, facturación electrónica, envío automático por correo y WhatsApp.
+            Registro de abonos, validación de crédito de empresas, eliminación de facturas y envío por correo/WhatsApp.
           </p>
         </div>
 
         <button
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => {
+            setCreditErrorMessage(null);
+            setIsModalOpen(true);
+          }}
           className="px-4 py-2.5 bg-gradient-to-r from-pink-500 to-rose-500 text-white font-medium text-sm rounded-xl shadow-xs hover:opacity-90 transition flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />
@@ -276,7 +268,7 @@ export default function FacturasPage() {
 
       {/* Main Content Layout (Filter Panel + Invoices Table) */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Left Filter Sidebar (Matching Siku) */}
+        {/* Left Filter Sidebar */}
         <div className="bg-white p-5 rounded-2xl border border-rose-100 shadow-sm space-y-4">
           <h2 className="font-bold text-gray-800 text-sm flex items-center gap-2 border-b pb-3">
             <Filter className="w-4 h-4 text-pink-500" /> Búsqueda de Facturas
@@ -357,9 +349,9 @@ export default function FacturasPage() {
                     <th className="py-3 px-3">Fecha & Hora</th>
                     <th className="py-3 px-3">Estado Pago</th>
                     <th className="py-3 px-3">Hacienda</th>
-                    <th className="py-3 px-3">Email</th>
                     <th className="py-3 px-3 text-right">Monto Total</th>
                     <th className="py-3 px-3 text-right">Saldo Pendiente</th>
+                    <th className="py-3 px-3 text-center">Eliminar</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 text-gray-700">
@@ -434,10 +426,6 @@ export default function FacturasPage() {
                         </span>
                       </td>
 
-                      <td className="py-3 px-3 text-center">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-500 mx-auto" />
-                      </td>
-
                       <td className="py-3 px-3 text-right font-bold text-gray-900">
                         ₡{inv.totalAmount.toLocaleString()}
                       </td>
@@ -449,6 +437,17 @@ export default function FacturasPage() {
                       >
                         ₡{inv.balancePending.toLocaleString()}
                       </td>
+
+                      {/* Botón de Eliminar Factura */}
+                      <td className="py-3 px-3 text-center">
+                        <button
+                          onClick={() => handleDeleteInvoice(inv.id)}
+                          title="Eliminar Factura"
+                          className="p-1.5 text-rose-600 hover:bg-rose-100 rounded-lg transition"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -456,7 +455,7 @@ export default function FacturasPage() {
             </div>
           </div>
 
-          {/* Revenue Breakdown by Payment Method (Matching Siku) */}
+          {/* Revenue Breakdown */}
           <div className="bg-white p-6 rounded-2xl border border-rose-100 shadow-sm space-y-4">
             <h3 className="text-xs font-extrabold text-gray-500 uppercase tracking-wider text-center">
               Resumen de ingresos agrupado por medio de pago (₡)
@@ -501,7 +500,7 @@ export default function FacturasPage() {
         </div>
       </div>
 
-      {/* Modal Registrar Nueva Factura / Servicio */}
+      {/* Modal Registrar Nueva Factura / Servicio con Validación de Crédito */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl border border-rose-100 space-y-4">
@@ -515,17 +514,27 @@ export default function FacturasPage() {
               </button>
             </div>
 
+            {creditErrorMessage && (
+              <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs font-bold flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0" />
+                {creditErrorMessage}
+              </div>
+            )}
+
             <form onSubmit={handleCreateInvoice} className="space-y-3">
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">Seleccionar Paciente *</label>
                 <select
                   value={selectedPatientId}
-                  onChange={(e) => setSelectedPatientId(e.target.value)}
+                  onChange={(e) => {
+                    setSelectedPatientId(e.target.value);
+                    setCreditErrorMessage(null);
+                  }}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs font-bold focus:outline-none focus:border-pink-500 uppercase"
                 >
                   {initialPatients.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.fullName} - Céd: {p.cedula}
+                      {p.fullName} - Céd: {p.cedula} {p.creditEnabled ? '(Crédito Habilitado)' : '(Sin Crédito)'}
                     </option>
                   ))}
                 </select>
@@ -580,7 +589,10 @@ export default function FacturasPage() {
                     type="number"
                     required
                     value={totalAmount}
-                    onChange={(e) => setTotalAmount(Number(e.target.value))}
+                    onChange={(e) => {
+                      setTotalAmount(Number(e.target.value));
+                      setCreditErrorMessage(null);
+                    }}
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs font-bold text-gray-900 focus:outline-none focus:border-pink-500"
                   />
                 </div>
@@ -590,14 +602,17 @@ export default function FacturasPage() {
                   <input
                     type="number"
                     value={abonoInitial}
-                    onChange={(e) => setAbonoInitial(Number(e.target.value))}
+                    onChange={(e) => {
+                      setAbonoInitial(Number(e.target.value));
+                      setCreditErrorMessage(null);
+                    }}
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs font-bold text-emerald-700 focus:outline-none focus:border-pink-500"
                   />
                 </div>
               </div>
 
               <div className="p-3 bg-gray-50 rounded-xl border border-gray-200 text-xs text-gray-600 flex items-center justify-between">
-                <span>Saldo Pendiente por Cobrar:</span>
+                <span>Saldo Pendiente (Crédito):</span>
                 <strong className="text-rose-600 text-sm font-extrabold">
                   ₡{Math.max(0, totalAmount - abonoInitial).toLocaleString()}
                 </strong>

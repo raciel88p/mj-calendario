@@ -33,6 +33,7 @@ model Patient {
   signatureUrl  String?
   photos        String[]        @default([])
   hasMembership Boolean         @default(false)
+  creditEnabled Boolean         @default(false)
   crmStage      String          @default("Nuevo Lead")
   appointments  Appointment[]
   payments      Payment[]
@@ -135,7 +136,7 @@ model PatientPackage {
   totalSessions     Int
   remainingSessions Int
   price             Float
-  status            String         @default("Activo") // Activo, Agotado, Vencido
+  status            String         @default("Activo")
   usages            PackageUsage[]
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
@@ -153,11 +154,11 @@ model CashRegister {
   id             String    @id @default(uuid())
   openedAt       DateTime  @default(now())
   closedAt       DateTime?
-  initialBalance Float     @default(50000) // ₡50,000 colones
+  initialBalance Float     @default(50000)
   efectivoSales  Float     @default(0)
   sinpeSales     Float     @default(0)
   tarjetaSales   Float     @default(0)
-  status         String    @default("Abierto") // Abierto, Cerrado
+  status         String    @default("Abierto")
   notes          String?
 }
 
