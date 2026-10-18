@@ -1,6 +1,6 @@
 import './globals.css';
 import Link from 'next/link';
-import { Calendar, Users, Sparkles, MessageCircle, BarChart3, Settings, Home, UserCheck, Heart } from 'lucide-react';
+import { Calendar, Users, Sparkles, MessageCircle, BarChart3, Settings, Home, UserCheck, Award } from 'lucide-react';
 
 export const metadata = {
   title: 'MJ Estética - Gestión de Clínica Estética, Clientes & CRM',
@@ -47,7 +47,6 @@ export default function RootLayout({
                 Agenda / Calendario
               </Link>
 
-              {/* 1. SEPARATE PAGE 1: PACIENTES / CLIENTES */}
               <Link
                 href="/pacientes"
                 className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-rose-50 hover:text-pink-600 transition"
@@ -56,7 +55,6 @@ export default function RootLayout({
                 Clientes & Pacientes
               </Link>
 
-              {/* 2. SEPARATE PAGE 2: CRM PIPELINE */}
               <Link
                 href="/crm"
                 className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-rose-50 hover:text-pink-600 transition"
@@ -83,10 +81,15 @@ export default function RootLayout({
 
               <Link
                 href="/reportes"
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-rose-50 hover:text-pink-600 transition"
+                className="flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-rose-50 hover:text-pink-600 transition"
               >
-                <BarChart3 className="w-4 h-4 text-pink-500" />
-                Reportes & Ventas
+                <span className="flex items-center gap-3">
+                  <BarChart3 className="w-4 h-4 text-pink-500" />
+                  Reportes & Asistentes
+                </span>
+                <span className="text-[10px] font-extrabold bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
+                  Metas 6
+                </span>
               </Link>
 
               <Link
