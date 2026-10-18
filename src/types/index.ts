@@ -11,6 +11,7 @@ export interface Patient {
   allergies?: string;
   notes?: string;
   consent: boolean;
+  hasMembership: boolean; // Membresía MJ
   crmStage: 'Nuevo Lead' | 'Contactado' | 'Cita Agendada' | 'Cliente Fidelizado' | 'Inactivo';
   createdAt: string;
 }

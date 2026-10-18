@@ -17,23 +17,24 @@ model User {
 }
 
 model Patient {
-  id           String        @id @default(uuid())
-  fullName     String
-  cedula       String        @unique
-  email        String        @unique
-  phone        String
-  whatsapp     String?
-  residence    String?
-  dob          DateTime?
-  gender       String?
-  allergies    String?
-  notes        String?
-  consent      Boolean       @default(false)
-  crmStage     String        @default("Nuevo Lead") // Nuevo Lead, Contactado, Cita Agendada, Cliente Fidelizado, Inactivo
-  appointments Appointment[]
-  payments     Payment[]
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  id            String        @id @default(uuid())
+  fullName      String
+  cedula        String        @unique
+  email         String        @unique
+  phone         String
+  whatsapp      String?
+  residence     String?
+  dob           DateTime?
+  gender        String?
+  allergies     String?
+  notes         String?
+  consent       Boolean       @default(false)
+  hasMembership Boolean       @default(false) // Membresía MJ
+  crmStage      String        @default("Nuevo Lead") // Nuevo Lead, Contactado, Cita Agendada, Cliente Fidelizado, Inactivo
+  appointments  Appointment[]
+  payments      Payment[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 }
 
 model Treatment {

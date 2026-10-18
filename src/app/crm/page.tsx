@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { initialPatients, initialCRMInteractions, buildWhatsAppLink } from '@/lib/data';
 import { Patient, CRMInteraction } from '@/types';
-import { Users, Phone, MessageCircle, Mail, Plus, CheckCircle2, ArrowRight, UserCheck, Calendar, Filter } from 'lucide-react';
+import { Users, Phone, MessageCircle, Mail, Plus, CheckCircle2, ArrowRight, UserCheck, Calendar, Filter, Star } from 'lucide-react';
 
 const CRM_STAGES: Patient['crmStage'][] = [
   'Nuevo Lead',
@@ -91,9 +91,18 @@ export default function CRMPage() {
                 {stagePatients.map((p) => (
                   <div
                     key={p.id}
-                    className="bg-white p-3 rounded-xl border border-gray-200 shadow-2xs space-y-2 hover:border-pink-300 transition"
+                    className={`bg-white p-3 rounded-xl border shadow-2xs space-y-2 hover:border-pink-300 transition relative ${
+                      p.hasMembership ? 'border-amber-300 ring-1 ring-amber-200' : 'border-gray-200'
+                    }`}
                   >
-                    <div className="font-bold text-xs text-gray-800 uppercase">{p.fullName}</div>
+                    {p.hasMembership && (
+                      <div className="absolute -top-2 right-2 bg-gradient-to-r from-amber-400 to-amber-500 text-white text-[9px] font-extrabold px-2 py-0.2 rounded-full flex items-center gap-0.5 shadow-2xs uppercase">
+                        <Star className="w-2.5 h-2.5 fill-white" />
+                        Membresía MJ
+                      </div>
+                    )}
+
+                    <div className="font-bold text-xs text-gray-800 uppercase pt-1">{p.fullName}</div>
                     <div className="text-[11px] text-gray-500">
                       <p>🪪 {p.cedula}</p>
                       <p>✉️ {p.email}</p>
@@ -174,7 +183,7 @@ export default function CRMPage() {
                 >
                   {patients.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.fullName} ({p.cedula})
+                      {p.fullName} ({p.cedula}) {p.hasMembership ? '⭐ Membresía MJ' : ''}
                     </option>
                   ))}
                 </select>
@@ -201,7 +210,7 @@ export default function CRMPage() {
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                   rows={3}
-                  placeholder="Ej. Se le envió información sobre tratamiento facial..."
+                  placeholder="Ej. Se le envió información sobre tratamiento facial con descuento de Membresía..."
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-pink-500"
                 />
               </div>

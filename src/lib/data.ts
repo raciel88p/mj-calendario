@@ -56,7 +56,7 @@ export const initialTreatments: Treatment[] = [
 export const initialPatients: Patient[] = [
   {
     id: 'p1',
-    fullName: 'MARÍA GONZÁLEZ PÉRERZ',
+    fullName: 'MARÍA GONZÁLEZ PÉREZ',
     cedula: '1-1111-0111',
     email: 'maria.gonzalez@example.com',
     phone: '+506 8888-1111',
@@ -67,6 +67,7 @@ export const initialPatients: Patient[] = [
     allergies: 'Ninguna',
     notes: 'Prefiere citas en horario matutino.',
     consent: true,
+    hasMembership: true, // Membresía MJ Activa
     crmStage: 'Cliente Fidelizado',
     createdAt: new Date().toISOString(),
   },
@@ -83,6 +84,7 @@ export const initialPatients: Patient[] = [
     allergies: 'Sensibilidad a retinol',
     notes: 'Alergia suave.',
     consent: true,
+    hasMembership: false,
     crmStage: 'Cita Agendada',
     createdAt: new Date().toISOString(),
   },
@@ -98,6 +100,7 @@ export const initialPatients: Patient[] = [
     gender: 'Femenino',
     allergies: 'Ninguna',
     consent: true,
+    hasMembership: true, // Membresía MJ Activa
     crmStage: 'Nuevo Lead',
     createdAt: new Date().toISOString(),
   },
@@ -107,9 +110,9 @@ export const initialCRMInteractions: CRMInteraction[] = [
   {
     id: 'crm-1',
     patientId: 'p1',
-    patientName: 'MARÍA GONZÁLEZ PÉRERZ',
+    patientName: 'MARÍA GONZÁLEZ PÉREZ',
     type: 'WhatsApp',
-    note: 'Enviada confirmación de cita para Facial Hidratante.',
+    note: 'Enviada confirmación de cita para Facial Hidratante. Membresía MJ verificada.',
     date: '2026-11-05',
   },
   {
@@ -117,7 +120,7 @@ export const initialCRMInteractions: CRMInteraction[] = [
     patientId: 'p3',
     patientName: 'FERNANDA LÓPEZ SÁNCHEZ',
     type: 'Llamada',
-    note: 'Consulta por tratamiento de Depilación Láser Diodo.',
+    note: 'Consulta por tratamiento de Depilación Láser Diodo con descuento de Membresía MJ.',
     date: '2026-11-04',
   },
 ];
@@ -126,7 +129,7 @@ export const initialAppointments: Appointment[] = [
   {
     id: 'a1',
     patientId: 'p1',
-    patientName: 'MARÍA GONZÁLEZ PÉRERZ',
+    patientName: 'MARÍA GONZÁLEZ PÉREZ',
     patientPhone: '+506 8888-1111',
     treatmentId: 't1',
     treatmentName: 'Facial Hidratante Profundo',
@@ -136,7 +139,7 @@ export const initialAppointments: Appointment[] = [
     price: 45000,
     deposit: 15000,
     status: 'Confirmada',
-    notes: 'Primera cita del mes',
+    notes: 'Primera cita del mes - Membresía MJ',
   },
   {
     id: 'a2',
