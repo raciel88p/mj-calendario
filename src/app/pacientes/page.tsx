@@ -3,7 +3,25 @@
 import { useState } from 'react';
 import { initialPatients, buildWhatsAppLink } from '@/lib/data';
 import { Patient } from '@/types';
-import { Users, Search, Plus, Phone, Mail, AlertTriangle, FileSpreadsheet, Upload, MapPin, CreditCard, MessageCircle, Edit, CheckCircle2, Star } from 'lucide-react';
+import {
+  Users,
+  Search,
+  Plus,
+  Phone,
+  Mail,
+  AlertTriangle,
+  FileSpreadsheet,
+  Upload,
+  MapPin,
+  CreditCard,
+  MessageCircle,
+  Edit,
+  CheckCircle2,
+  Star,
+  FileSignature,
+  Camera,
+  X,
+} from 'lucide-react';
 
 export default function PacientesPage() {
   const [patients, setPatients] = useState<Patient[]>(initialPatients);
@@ -11,9 +29,11 @@ export default function PacientesPage() {
   const [filterMembershipOnly, setFilterMembershipOnly] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
 
-  // Modal State
+  // Modals State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isConsentModalOpen, setIsConsentModalOpen] = useState(false);
+  const [isGalleryModalOpen, setIsGalleryModalOpen] = useState(false);
 
   // Patient Form Fields
   const [fullName, setFullName] = useState('');
@@ -32,6 +52,17 @@ export default function PacientesPage() {
   // Excel Import text area / CSV parser
   const [csvRawInput, setCsvRawInput] = useState('');
   const [importSuccessCount, setImportSuccessCount] = useState<number | null>(null);
+
+  // Digital Signature State
+  const [signatureName, setSignatureName] = useState('');
+  const [isSigned, setIsSigned] = useState(false);
+
+  // Photo Gallery State
+  const [photoUrlInput, setPhotoUrlInput] = useState('');
+  const [patientPhotos, setPatientPhotos] = useState<string[]>([
+    'https://images.unsplash.com/photo-1512290900673-030a5fb7a3c3?auto=format&fit=crop&w=400&q=80',
+    'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=400&q=80',
+  ]);
 
   const filteredPatients = patients.filter((p) => {
     const matchesSearch =
@@ -150,6 +181,13 @@ export default function PacientesPage() {
     }
   };
 
+  const handleAddPhoto = () => {
+    if (photoUrlInput.trim()) {
+      setPatientPhotos([photoUrlInput.trim(), ...patientPhotos]);
+      setPhotoUrlInput('');
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -160,7 +198,7 @@ export default function PacientesPage() {
             Directorio de Clientes & Pacientes
           </h1>
           <p className="text-sm text-gray-500 mt-0.5">
-            Gestión completa de expediente, datos obligatorios (Cédula y Correo), Membresía MJ e Importación Excel.
+            Gestión completa de expediente, consentimiento firmado digital, fotos Antes/Después e importación Excel.
           </p>
         </div>
 
@@ -279,8 +317,35 @@ export default function PacientesPage() {
               </div>
             )}
 
+            {/* Actions: Consent & Gallery */}
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <button
+                onClick={() => {
+                  setSelectedPatient(p);
+                  setSignatureName(p.fullName);
+                  setIsSigned(false);
+                  setIsConsentModalOpen(true);
+                }}
+                className="px-2.5 py-1.5 bg-rose-50 text-rose-700 hover:bg-rose-100 rounded-lg text-xs font-semibold flex items-center justify-center gap-1 transition"
+              >
+                <FileSignature className="w-3.5 h-3.5" /> Consentimiento
+              </button>
+
+              <button
+                onClick={() => {
+                  setSelectedPatient(p);
+                  setIsGalleryModalOpen(true);
+                }}
+                className="px-2.5 py-1.5 bg-purple-50 text-purple-700 hover:bg-purple-100 rounded-lg text-xs font-semibold flex items-center justify-center gap-1 transition"
+              >
+                <Camera className="w-3.5 h-3.5" /> Fotos Antes/Después
+              </button>
+            </div>
+
             <div className="flex items-center justify-between border-t pt-3 border-gray-100 text-xs">
-              <span className="text-emerald-600 font-medium">Consentimiento Activo</span>
+              <span className="text-emerald-600 font-medium flex items-center gap-1">
+                <CheckCircle2 className="w-3.5 h-3.5" /> Expediente Verificado
+              </span>
               <button
                 onClick={() => {
                   setSelectedPatient(p);
@@ -504,6 +569,119 @@ export default function PacientesPage() {
                 </div>
               </form>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Digital Consent Modal */}
+      {isConsentModalOpen && selectedPatient && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl border border-rose-100 space-y-4">
+            <div className="flex items-center justify-between border-b pb-3">
+              <h3 className="text-base font-bold text-gray-800 flex items-center gap-2">
+                <FileSignature className="w-5 h-5 text-pink-500" />
+                Consentimiento Informado - MJ Estética
+              </h3>
+              <button onClick={() => setIsConsentModalOpen(false)}>
+                <X className="w-5 h-5 text-gray-400" />
+              </button>
+            </div>
+
+            <div className="p-3 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-600 space-y-2 max-h-40 overflow-y-auto">
+              <p>
+                Yo, <strong>{selectedPatient.fullName}</strong>, identificado con cédula <strong>{selectedPatient.cedula}</strong>, declaro que he sido informado/a adecuadamente sobre los procedimientos estéticos a realizar en MJ Estética & Wellness Center.
+              </p>
+              <p>
+                Acepto seguir las indicaciones pre y post tratamiento y autorizo al personal profesional a llevar mi expediente clínico digital de conformidad con la legislación de salud de Costa Rica.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-xs font-semibold text-gray-700">Firma Digital / Nombre del Firmante</label>
+              <input
+                type="text"
+                value={signatureName}
+                onChange={(e) => setSignatureName(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm font-semibold uppercase"
+              />
+              <div
+                onClick={() => setIsSigned(true)}
+                className={`p-6 border-2 border-dashed rounded-xl text-center cursor-pointer transition ${
+                  isSigned ? 'border-emerald-500 bg-emerald-50' : 'border-gray-300 hover:border-pink-400'
+                }`}
+              >
+                {isSigned ? (
+                  <div className="text-emerald-700 text-xs font-bold flex items-center justify-center gap-2">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                    ¡Firma registrada exitosamente por {signatureName}!
+                  </div>
+                ) : (
+                  <p className="text-xs text-gray-500 italic">Haz clic aquí para estampillar firma digital del paciente</p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-3 border-t">
+              <button
+                onClick={() => setIsConsentModalOpen(false)}
+                className="px-4 py-2 bg-pink-500 text-white rounded-xl text-xs font-semibold hover:bg-pink-600"
+              >
+                Guardar y Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Before / After Photo Gallery Modal */}
+      {isGalleryModalOpen && selectedPatient && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl border border-rose-100 space-y-4">
+            <div className="flex items-center justify-between border-b pb-3">
+              <h3 className="text-base font-bold text-gray-800 flex items-center gap-2">
+                <Camera className="w-5 h-5 text-purple-600" />
+                Galería de Evolución (Antes / Después)
+              </h3>
+              <button onClick={() => setIsGalleryModalOpen(false)}>
+                <X className="w-5 h-5 text-gray-400" />
+              </button>
+            </div>
+
+            <div className="flex gap-2">
+              <input
+                type="url"
+                value={photoUrlInput}
+                onChange={(e) => setPhotoUrlInput(e.target.value)}
+                placeholder="Pegar enlace de imagen (URL)..."
+                className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-xs"
+              />
+              <button
+                onClick={handleAddPhoto}
+                className="px-3 py-2 bg-purple-600 text-white rounded-lg text-xs font-semibold hover:bg-purple-700"
+              >
+                Agregar
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 max-h-60 overflow-y-auto p-1">
+              {patientPhotos.map((url, idx) => (
+                <div key={idx} className="relative rounded-xl overflow-hidden border border-gray-200 group">
+                  <img src={url} alt={`Evolución ${idx}`} className="w-full h-32 object-cover" />
+                  <div className="absolute bottom-0 inset-x-0 bg-black/60 text-white text-[10px] p-1 text-center font-bold">
+                    {idx === 0 ? 'Foto Antes' : 'Foto Después'}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-end pt-3 border-t">
+              <button
+                onClick={() => setIsGalleryModalOpen(false)}
+                className="px-4 py-2 bg-gray-800 text-white rounded-xl text-xs font-semibold"
+              >
+                Cerrar Galería
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -18,10 +18,10 @@ model User {
 }
 
 model Patient {
-  id            String        @id @default(uuid())
+  id            String          @id @default(uuid())
   fullName      String
-  cedula        String        @unique
-  email         String        @unique
+  cedula        String          @unique
+  email         String          @unique
   phone         String
   whatsapp      String?
   residence     String?
@@ -29,25 +29,29 @@ model Patient {
   gender        String?
   allergies     String?
   notes         String?
-  consent       Boolean       @default(false)
-  hasMembership Boolean       @default(false) // Membresía MJ
-  crmStage      String        @default("Nuevo Lead") // Nuevo Lead, Contactado, Cita Agendada, Cliente Fidelizado, Inactivo
+  consent       Boolean         @default(false)
+  signatureUrl  String?
+  photos        String[]        @default([])
+  hasMembership Boolean         @default(false)
+  crmStage      String          @default("Nuevo Lead")
   appointments  Appointment[]
   payments      Payment[]
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  packages      PatientPackage[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
 }
 
 model Treatment {
   id           String        @id @default(uuid())
   name         String
-  category     String        // Faciales, Masajes, Láser, Depilación, Corporales, Otros
+  category     String
   durationMins Int           @default(60)
   price        Float
   color        String        @default("#3B82F6")
   description  String?
   active       Boolean       @default(true)
   appointments Appointment[]
+  packages     Package[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 }
@@ -97,6 +101,64 @@ model Payment {
   paymentMethod String
   voucher       String?
   createdAt     DateTime     @default(now())
+}
+
+model AssistantGoal {
+  id            String   @id @default(uuid())
+  name          String
+  role          String   @default("Asistente Dental / Estética")
+  monthlyTarget Float    @default(1500000)
+  currentSales  Float    @default(0)
+  efficiency    Int      @default(90)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Package {
+  id             String           @id @default(uuid())
+  name           String
+  treatmentId    String
+  treatment      Treatment        @relation(fields: [treatmentId], references: [id])
+  totalSessions  Int
+  price          Float
+  active         Boolean          @default(true)
+  patientPackages PatientPackage[]
+  createdAt      DateTime         @default(now())
+}
+
+model PatientPackage {
+  id                String         @id @default(uuid())
+  patientId         String
+  patient           Patient        @relation(fields: [patientId], references: [id])
+  packageId         String
+  package           Package        @relation(fields: [packageId], references: [id])
+  totalSessions     Int
+  remainingSessions Int
+  price             Float
+  status            String         @default("Activo") // Activo, Agotado, Vencido
+  usages            PackageUsage[]
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+}
+
+model PackageUsage {
+  id               String         @id @default(uuid())
+  patientPackageId String
+  patientPackage   PatientPackage @relation(fields: [patientPackageId], references: [id])
+  usedAt           DateTime       @default(now())
+  notes            String?
+}
+
+model CashRegister {
+  id             String    @id @default(uuid())
+  openedAt       DateTime  @default(now())
+  closedAt       DateTime?
+  initialBalance Float     @default(50000) // ₡50,000 colones
+  efectivoSales  Float     @default(0)
+  sinpeSales     Float     @default(0)
+  tarjetaSales   Float     @default(0)
+  status         String    @default("Abierto") // Abierto, Cerrado
+  notes          String?
 }
 
 model Setting {
