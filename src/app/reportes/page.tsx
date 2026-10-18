@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { initialAppointments, initialPatients } from '@/lib/data';
-import { BarChart3, Download, TrendingUp, Users, DollarSign, Calendar, Target, Award, UserCheck, Plus, Edit, Trash2, Settings, X, CheckCircle2 } from 'lucide-react';
+import { BarChart3, Download, TrendingUp, Users, DollarSign, Calendar, Target, Award, UserCheck, Plus, Edit, Trash2, Settings, X, CheckCircle2, Sparkles } from 'lucide-react';
 
 interface AssistantTarget {
   id: string;
@@ -169,10 +169,10 @@ export default function ReportesPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
             <BarChart3 className="w-6 h-6 text-pink-500" />
-            Reportes, Metas de Ventas & Asistentes
+            Reportes, Metas de Ventas & Administrador de Asistentes
           </h1>
           <p className="text-sm text-gray-500 mt-0.5">
-            Configuración de meta global de la estética y gestión de asistentes con metas individuales.
+            Configuración de meta global de ventas (₡) y gestión de asistentes con metas individuales.
           </p>
         </div>
 
@@ -185,64 +185,71 @@ export default function ReportesPage() {
         </button>
       </div>
 
-      {/* Monthly Team Sales Target Widget */}
-      <div className="bg-white rounded-2xl p-6 border border-rose-100 shadow-sm space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-3">
-          <div className="flex items-center gap-2">
-            <Target className="w-6 h-6 text-emerald-600" />
+      {/* 1. SECCIÓN DESTACADA: META GLOBAL DE VENTAS DE LA ESTÉTICA */}
+      <div className="bg-gradient-to-r from-emerald-50 via-white to-teal-50 rounded-2xl p-6 border border-emerald-200 shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-emerald-200/60 pb-3">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-emerald-600 text-white rounded-xl shadow-xs">
+              <Target className="w-6 h-6" />
+            </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-800">Meta Global de Ventas de la Clínica</h2>
-              <p className="text-xs text-gray-500">Objetivo mensual configurable para toda la estética</p>
+              <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider">Configuración de Metas</span>
+              <h2 className="text-xl font-bold text-gray-800">Meta Global de Ventas de la Clínica</h2>
+              <p className="text-xs text-gray-500">Objetivo acumulado de ventas mensuales para toda MJ Estética</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <div className="text-right">
-              <span className="text-2xl font-extrabold text-emerald-600">₡{totalRevenue.toLocaleString()}</span>
-              <span className="text-xs text-gray-400 font-semibold block">/ ₡{globalSalesTarget.toLocaleString()} Meta</span>
+              <span className="text-2xl font-extrabold text-emerald-700">₡{totalRevenue.toLocaleString()}</span>
+              <span className="text-xs text-gray-500 font-bold block">
+                de ₡{globalSalesTarget.toLocaleString()} Meta Mensual
+              </span>
             </div>
 
+            {/* BOTÓN DESTACADO PARA MODIFICAR META GLOBAL */}
             <button
               onClick={() => {
                 setTempGlobalTarget(globalSalesTarget);
                 setIsGlobalTargetModalOpen(true);
               }}
-              className="px-3 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-xl text-xs font-bold border border-emerald-200 transition flex items-center gap-1"
+              className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold shadow-sm transition flex items-center gap-2"
             >
-              <Edit className="w-3.5 h-3.5" /> Modificar Meta Global
+              <Edit className="w-4 h-4" />
+              Modificar Meta Global
             </button>
           </div>
         </div>
 
         {/* Progress bar */}
-        <div className="space-y-1">
+        <div className="space-y-1.5">
           <div className="flex justify-between text-xs font-bold text-gray-700">
-            <span>Progreso General de la Estética</span>
-            <span>{targetProgressPct}% Completado</span>
+            <span>Cumplimiento del Objetivo General</span>
+            <span className="text-emerald-700 font-extrabold">{targetProgressPct}% Completado</span>
           </div>
-          <div className="w-full bg-gray-100 h-4 rounded-full overflow-hidden p-0.5 border border-gray-200">
+          <div className="w-full bg-gray-200 h-4 rounded-full overflow-hidden p-0.5 border border-emerald-200">
             <div
-              className="bg-gradient-to-r from-emerald-500 to-teal-500 h-full rounded-full transition-all duration-500"
+              className="bg-gradient-to-r from-emerald-500 to-teal-600 h-full rounded-full transition-all duration-500"
               style={{ width: `${targetProgressPct}%` }}
             />
           </div>
         </div>
       </div>
 
-      {/* Assistants Performance & Administrator Section */}
+      {/* 2. SECCIÓN DESTACADA: ADMINISTRADOR DE ASISTENTES */}
       <div className="bg-white rounded-2xl p-6 border border-rose-100 shadow-sm space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-3">
           <div>
-            <h2 className="font-bold text-gray-800 text-base flex items-center gap-2">
+            <h2 className="font-bold text-gray-800 text-lg flex items-center gap-2">
               <UserCheck className="w-5 h-5 text-purple-600" />
-              Administrador de Asistentes & Metas ({assistants.length})
+              Administrador de Asistentes & Metas Individuales ({assistants.length})
             </h2>
-            <p className="text-xs text-gray-500">Cree asistentes, guarde cambios y edite sus metas individuales de ventas (₡).</p>
+            <p className="text-xs text-gray-500">Cree asistentes, guarde cambios, edite las metas individuales en colones (₡) y revise la eficacia.</p>
           </div>
 
           <button
             onClick={openNewAssistantModal}
-            className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5 self-start sm:self-auto"
+            className="px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5 self-start sm:self-auto"
           >
             <Plus className="w-4 h-4" /> Agregar Nueva Asistente
           </button>
@@ -253,10 +260,10 @@ export default function ReportesPage() {
             const pct = asist.targetAmount > 0 ? Math.min(Math.round((asist.currentSales / asist.targetAmount) * 100), 100) : 0;
 
             return (
-              <div key={asist.id} className="p-4 rounded-xl border border-gray-200 hover:border-purple-300 transition space-y-3 bg-slate-50/50 relative">
+              <div key={asist.id} className="p-4 rounded-xl border border-gray-200 hover:border-purple-300 transition space-y-3 bg-slate-50/50 relative shadow-2xs">
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-gray-900 text-sm truncate max-w-[170px]">{asist.name}</span>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-700">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200">
                     {asist.conversionRate}% Eficiencia
                   </span>
                 </div>
@@ -268,7 +275,7 @@ export default function ReportesPage() {
                   </p>
                   <p className="flex justify-between">
                     <span>Meta Asignada:</span>
-                    <strong className="text-gray-800">₡{asist.targetAmount.toLocaleString()}</strong>
+                    <strong className="text-gray-900 font-bold">₡{asist.targetAmount.toLocaleString()}</strong>
                   </p>
                   <p className="flex justify-between">
                     <span>Citas Atendidas:</span>
@@ -302,9 +309,9 @@ export default function ReportesPage() {
                       setConversionRate(asist.conversionRate);
                       setIsModalOpen(true);
                     }}
-                    className="px-2.5 py-1 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded font-medium flex items-center gap-1"
+                    className="px-2.5 py-1 text-purple-700 hover:bg-purple-50 rounded font-bold flex items-center gap-1 border border-purple-200"
                   >
-                    <Edit className="w-3.5 h-3.5" /> Editar Asistente & Meta
+                    <Edit className="w-3.5 h-3.5" /> Modificar Meta
                   </button>
                   <button
                     onClick={() => handleDeleteAssistant(asist.id)}
@@ -319,6 +326,60 @@ export default function ReportesPage() {
         </div>
       </div>
 
+      {/* Metrics Summary Row */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="bg-white p-5 rounded-2xl border border-rose-100 shadow-sm">
+          <p className="text-xs font-semibold text-gray-400 uppercase">Total Ingresos Recaudados</p>
+          <h3 className="text-2xl font-bold text-gray-800 mt-1">₡{totalRevenue.toLocaleString()}</h3>
+        </div>
+
+        <div className="bg-white p-5 rounded-2xl border border-rose-100 shadow-sm">
+          <p className="text-xs font-semibold text-gray-400 uppercase">Saldo Pendiente por Cobrar</p>
+          <h3 className="text-2xl font-bold text-rose-500 mt-1">₡{totalPending.toLocaleString()}</h3>
+        </div>
+
+        <div className="bg-white p-5 rounded-2xl border border-rose-100 shadow-sm">
+          <p className="text-xs font-semibold text-gray-400 uppercase">Total Citas Atendidas</p>
+          <h3 className="text-2xl font-bold text-amber-500 mt-1">{totalAppointments}</h3>
+        </div>
+      </div>
+
+      {/* Detail Table */}
+      <div className="bg-white rounded-2xl border border-rose-100 shadow-sm p-6 space-y-4">
+        <h2 className="font-bold text-gray-800 text-base">Desglose de Ventas y Tratamientos</h2>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr className="border-b border-gray-100 text-gray-400 uppercase font-semibold">
+                <th className="py-3 px-2">Paciente</th>
+                <th className="py-3 px-2">Tratamiento</th>
+                <th className="py-3 px-2">Precio Total</th>
+                <th className="py-3 px-2">Abono Realizado</th>
+                <th className="py-3 px-2">Saldo Pendiente</th>
+                <th className="py-3 px-2">Estado</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50 text-gray-700">
+              {appointments.map((a) => (
+                <tr key={a.id} className="hover:bg-rose-50/50 transition">
+                  <td className="py-3 px-2 font-medium text-gray-800">{a.patientName}</td>
+                  <td className="py-3 px-2">{a.treatmentName}</td>
+                  <td className="py-3 px-2 font-bold">₡{a.price.toLocaleString()}</td>
+                  <td className="py-3 px-2 text-emerald-600 font-semibold">₡{a.deposit.toLocaleString()}</td>
+                  <td className="py-3 px-2 text-rose-500 font-semibold">₡{(a.price - a.deposit).toLocaleString()}</td>
+                  <td className="py-3 px-2">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-pink-50 text-pink-600">
+                      {a.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       {/* Modal Editar Meta Global de Ventas */}
       {isGlobalTargetModalOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
@@ -326,7 +387,7 @@ export default function ReportesPage() {
             <div className="flex items-center justify-between border-b pb-3">
               <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
                 <Target className="w-5 h-5 text-emerald-600" />
-                Modificar Meta Global
+                Modificar Meta Global de Ventas
               </h3>
               <button onClick={() => setIsGlobalTargetModalOpen(false)} className="text-gray-400 hover:text-gray-600">
                 <X className="w-5 h-5" />
@@ -336,7 +397,7 @@ export default function ReportesPage() {
             <form onSubmit={handleSaveGlobalTarget} className="space-y-3">
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">
-                  Nueva Meta Global Mensual de la Clínica (₡) *
+                  Nueva Meta Global Mensual de la Estética (₡) *
                 </label>
                 <input
                   type="number"
