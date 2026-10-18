@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { initialPatients, buildWhatsAppLink } from '@/lib/data';
 import { Patient } from '@/types';
-import { Users, Search, Plus, Phone, Mail, AlertTriangle, FileSpreadsheet, Upload, MapPin, CreditCard, MessageCircle, Edit, CheckCircle2, Star, Award } from 'lucide-react';
+import { Users, Search, Plus, Phone, Mail, AlertTriangle, FileSpreadsheet, Upload, MapPin, CreditCard, MessageCircle, Edit, CheckCircle2, Star } from 'lucide-react';
 
 export default function PacientesPage() {
   const [patients, setPatients] = useState<Patient[]>(initialPatients);
@@ -29,7 +29,7 @@ export default function PacientesPage() {
   const [hasMembership, setHasMembership] = useState(false);
   const [crmStage, setCrmStage] = useState<Patient['crmStage']>('Nuevo Lead');
 
-  // Excel Import text area / file parser
+  // Excel Import text area / CSV parser
   const [csvRawInput, setCsvRawInput] = useState('');
   const [importSuccessCount, setImportSuccessCount] = useState<number | null>(null);
 
@@ -157,10 +157,10 @@ export default function PacientesPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
             <Users className="w-6 h-6 text-pink-500" />
-            Directorio de Pacientes & Membresías
+            Directorio de Clientes & Pacientes
           </h1>
           <p className="text-sm text-gray-500 mt-0.5">
-            Gestión de expediente, Membresía MJ (socios VIP) e Importador Excel.
+            Gestión completa de expediente, datos obligatorios (Cédula y Correo), Membresía MJ e Importación Excel.
           </p>
         </div>
 
@@ -191,7 +191,7 @@ export default function PacientesPage() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar por Nombre, Cédula, Correo o Teléfono..."
+            placeholder="Buscar paciente por Nombre, Cédula, Correo o Teléfono..."
             className="w-full bg-transparent text-sm focus:outline-none text-gray-800"
           />
         </div>
