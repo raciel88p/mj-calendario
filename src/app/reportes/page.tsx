@@ -15,7 +15,11 @@ interface AssistantTarget {
 
 export default function ReportesPage() {
   const [appointments] = useState(initialAppointments);
-  const [patients] = useState(initialPatients);
+
+  // Global Clinic Sales Target State
+  const [globalSalesTarget, setGlobalSalesTarget] = useState(5000000); // ₡5,000,000 default
+  const [isGlobalTargetModalOpen, setIsGlobalTargetModalOpen] = useState(false);
+  const [tempGlobalTarget, setTempGlobalTarget] = useState(5000000);
 
   // 6 Clinic Assistants State + CRUD
   const [assistants, setAssistants] = useState<AssistantTarget[]>([
@@ -80,8 +84,7 @@ export default function ReportesPage() {
 
   // Dynamic calculations
   const totalRevenue = assistants.reduce((sum, a) => sum + a.currentSales, 0);
-  const monthlyTeamTarget = assistants.reduce((sum, a) => sum + a.targetAmount, 0) || 5000000;
-  const targetProgressPct = Math.min(Math.round((totalRevenue / monthlyTeamTarget) * 100), 100);
+  const targetProgressPct = Math.min(Math.round((totalRevenue / (globalSalesTarget || 1)) * 100), 100);
 
   const totalPending = appointments.reduce((sum, a) => sum + (a.price - a.deposit), 0);
   const totalAppointments = appointments.length;
@@ -131,6 +134,12 @@ export default function ReportesPage() {
     setAssistants(assistants.filter((a) => a.id !== id));
   };
 
+  const handleSaveGlobalTarget = (e: React.FormEvent) => {
+    e.preventDefault();
+    setGlobalSalesTarget(Number(tempGlobalTarget));
+    setIsGlobalTargetModalOpen(false);
+  };
+
   const handleExportCSV = () => {
     const headers = ['ID', 'Paciente', 'Tratamiento', 'Precio', 'Abono', 'Estado', 'Fecha'];
     const rows = appointments.map((a) => [
@@ -160,10 +169,10 @@ export default function ReportesPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
             <BarChart3 className="w-6 h-6 text-pink-500" />
-            Reportes, Administrador de Asistentes & Metas
+            Reportes, Metas de Ventas & Asistentes
           </h1>
           <p className="text-sm text-gray-500 mt-0.5">
-            Gestión completa de asistentes, asignación de metas de ventas y evaluación de eficacia.
+            Configuración de meta global de la estética y gestión de asistentes con metas individuales.
           </p>
         </div>
 
@@ -183,19 +192,32 @@ export default function ReportesPage() {
             <Target className="w-6 h-6 text-emerald-600" />
             <div>
               <h2 className="text-lg font-bold text-gray-800">Meta Global de Ventas de la Clínica</h2>
-              <p className="text-xs text-gray-500">Suma calculada de las metas asignadas a las asistentes</p>
+              <p className="text-xs text-gray-500">Objetivo mensual configurable para toda la estética</p>
             </div>
           </div>
-          <div className="text-right">
-            <span className="text-2xl font-extrabold text-emerald-600">₡{totalRevenue.toLocaleString()}</span>
-            <span className="text-xs text-gray-400 font-semibold block">/ ₡{monthlyTeamTarget.toLocaleString()} Meta</span>
+
+          <div className="flex items-center gap-3">
+            <div className="text-right">
+              <span className="text-2xl font-extrabold text-emerald-600">₡{totalRevenue.toLocaleString()}</span>
+              <span className="text-xs text-gray-400 font-semibold block">/ ₡{globalSalesTarget.toLocaleString()} Meta</span>
+            </div>
+
+            <button
+              onClick={() => {
+                setTempGlobalTarget(globalSalesTarget);
+                setIsGlobalTargetModalOpen(true);
+              }}
+              className="px-3 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-xl text-xs font-bold border border-emerald-200 transition flex items-center gap-1"
+            >
+              <Edit className="w-3.5 h-3.5" /> Modificar Meta Global
+            </button>
           </div>
         </div>
 
         {/* Progress bar */}
         <div className="space-y-1">
           <div className="flex justify-between text-xs font-bold text-gray-700">
-            <span>Progreso General</span>
+            <span>Progreso General de la Estética</span>
             <span>{targetProgressPct}% Completado</span>
           </div>
           <div className="w-full bg-gray-100 h-4 rounded-full overflow-hidden p-0.5 border border-gray-200">
@@ -213,9 +235,9 @@ export default function ReportesPage() {
           <div>
             <h2 className="font-bold text-gray-800 text-base flex items-center gap-2">
               <UserCheck className="w-5 h-5 text-purple-600" />
-              Administrador de Asistentes & Metas de Ventas ({assistants.length})
+              Administrador de Asistentes & Metas ({assistants.length})
             </h2>
-            <p className="text-xs text-gray-500">Cree, configure las metas de ventas en colones (₡) y evalúe a cada asistente.</p>
+            <p className="text-xs text-gray-500">Cree asistentes, guarde cambios y edite sus metas individuales de ventas (₡).</p>
           </div>
 
           <button
@@ -282,7 +304,7 @@ export default function ReportesPage() {
                     }}
                     className="px-2.5 py-1 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded font-medium flex items-center gap-1"
                   >
-                    <Edit className="w-3.5 h-3.5" /> Configurar Meta
+                    <Edit className="w-3.5 h-3.5" /> Editar Asistente & Meta
                   </button>
                   <button
                     onClick={() => handleDeleteAssistant(asist.id)}
@@ -297,67 +319,61 @@ export default function ReportesPage() {
         </div>
       </div>
 
-      {/* Metrics Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-rose-100 shadow-sm">
-          <p className="text-xs font-semibold text-gray-400 uppercase">Total Ingresos Recaudados</p>
-          <h3 className="text-2xl font-bold text-gray-800 mt-1">₡{totalRevenue.toLocaleString()}</h3>
+      {/* Modal Editar Meta Global de Ventas */}
+      {isGlobalTargetModalOpen && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl border border-emerald-100 space-y-4">
+            <div className="flex items-center justify-between border-b pb-3">
+              <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                <Target className="w-5 h-5 text-emerald-600" />
+                Modificar Meta Global
+              </h3>
+              <button onClick={() => setIsGlobalTargetModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveGlobalTarget} className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                  Nueva Meta Global Mensual de la Clínica (₡) *
+                </label>
+                <input
+                  type="number"
+                  required
+                  value={tempGlobalTarget}
+                  onChange={(e) => setTempGlobalTarget(Number(e.target.value))}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-emerald-600 font-extrabold text-emerald-700"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t">
+                <button
+                  type="button"
+                  onClick={() => setIsGlobalTargetModalOpen(false)}
+                  className="px-4 py-2 border border-gray-200 rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 shadow-2xs"
+                >
+                  Guardar Meta Global
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
+      )}
 
-        <div className="bg-white p-5 rounded-2xl border border-rose-100 shadow-sm">
-          <p className="text-xs font-semibold text-gray-400 uppercase">Saldo Pendiente por Cobrar</p>
-          <h3 className="text-2xl font-bold text-rose-500 mt-1">₡{totalPending.toLocaleString()}</h3>
-        </div>
-
-        <div className="bg-white p-5 rounded-2xl border border-rose-100 shadow-sm">
-          <p className="text-xs font-semibold text-gray-400 uppercase">Total Citas Atendidas</p>
-          <h3 className="text-2xl font-bold text-amber-500 mt-1">{totalAppointments}</h3>
-        </div>
-      </div>
-
-      {/* Detail Table */}
-      <div className="bg-white rounded-2xl border border-rose-100 shadow-sm p-6 space-y-4">
-        <h2 className="font-bold text-gray-800 text-base">Desglose de Ventas y Tratamientos</h2>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr className="border-b border-gray-100 text-gray-400 uppercase font-semibold">
-                <th className="py-3 px-2">Paciente</th>
-                <th className="py-3 px-2">Tratamiento</th>
-                <th className="py-3 px-2">Precio Total</th>
-                <th className="py-3 px-2">Abono Realizado</th>
-                <th className="py-3 px-2">Saldo Pendiente</th>
-                <th className="py-3 px-2">Estado</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50 text-gray-700">
-              {appointments.map((a) => (
-                <tr key={a.id} className="hover:bg-rose-50/50 transition">
-                  <td className="py-3 px-2 font-medium text-gray-800">{a.patientName}</td>
-                  <td className="py-3 px-2">{a.treatmentName}</td>
-                  <td className="py-3 px-2 font-bold">₡{a.price.toLocaleString()}</td>
-                  <td className="py-3 px-2 text-emerald-600 font-semibold">₡{a.deposit.toLocaleString()}</td>
-                  <td className="py-3 px-2 text-rose-500 font-semibold">₡{(a.price - a.deposit).toLocaleString()}</td>
-                  <td className="py-3 px-2">
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-pink-50 text-pink-600">
-                      {a.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Modal Configurar / Crear Asistente y Escoger Meta */}
+      {/* Modal Configurar / Crear Asistente */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-purple-100 space-y-4">
             <div className="flex items-center justify-between border-b pb-3">
               <h3 className="text-lg font-bold text-gray-800">
-                {selectedAsist ? 'Configurar Meta de Asistente' : 'Agregar Nueva Asistente'}
+                {selectedAsist ? 'Guardar Cambios en Asistente' : 'Agregar Nueva Asistente'}
               </h3>
               <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
                 <X className="w-5 h-5" />
@@ -378,7 +394,7 @@ export default function ReportesPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">Escoger Meta de Ventas Mensual (₡) *</label>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Meta de Ventas Individual (₡) *</label>
                 <input
                   type="number"
                   required
@@ -391,7 +407,7 @@ export default function ReportesPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">Ventas Actuales (₡)</label>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">Ventas Logradas (₡)</label>
                   <input
                     type="number"
                     value={currentSales}
