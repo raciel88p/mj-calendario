@@ -1,10 +1,10 @@
 import './globals.css';
 import Link from 'next/link';
-import { Calendar, Users, Sparkles, MessageCircle, BarChart3, Settings, Home, UserCheck, Award } from 'lucide-react';
+import { Calendar, Users, Sparkles, MessageCircle, BarChart3, Settings, Home, UserCheck, Receipt } from 'lucide-react';
 
 export const metadata = {
   title: 'MJ Estética - Gestión de Clínica Estética, Clientes & CRM',
-  description: 'Sistema integral de administración de pacientes, agenda, CRM y tratamientos para MJ Estética',
+  description: 'Sistema integral de administración de pacientes, agenda, CRM, facturación y tratamientos para MJ Estética',
 };
 
 export default function RootLayout({
@@ -61,6 +61,19 @@ export default function RootLayout({
               >
                 <UserCheck className="w-4 h-4 text-purple-500" />
                 CRM & Pipeline
+              </Link>
+
+              <Link
+                href="/facturas"
+                className="flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-rose-50 hover:text-pink-600 transition"
+              >
+                <span className="flex items-center gap-3">
+                  <Receipt className="w-4 h-4 text-emerald-500" />
+                  Facturación & Pagos
+                </span>
+                <span className="text-[10px] font-extrabold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
+                  Siku
+                </span>
               </Link>
 
               <Link
