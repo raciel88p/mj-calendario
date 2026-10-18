@@ -25,15 +25,16 @@ mj-calendario/
 │   ├── app/
 │   │   ├── layout.tsx       # Layout principal con navegación responsiva
 │   │   ├── page.tsx         # Dashboard principal con métricas y agenda del día
-│   │   ├── agenda/          # Agenda interactiva con vistas Día/Semana/Mes
-│   │   ├── pacientes/       # CRUD de Pacientes y Expediente Clínico Completo
-│   │   ├── tratamientos/    # Catálogo editable de Tratamientos por categoría y color
+│   │   ├── agenda/          # Agenda interactiva estilo Google Calendar
+│   │   ├── pacientes/       # Clientes & Pacientes (Cédula, Correo, Importador Excel)
+│   │   ├── crm/             # CRM Negocios & Embudo Multicanal
+│   │   ├── tratamientos/    # Catálogo editable de Tratamientos
 │   │   ├── recordatorios/   # Centro de Recordatorios de WhatsApp (Enlaces manuales wa.me)
-│   │   ├── reportes/        # Métricas, ventas y exportación Excel/CSV/PDF
-│   │   ├── configuracion/   # Configuración de profesionales, cabinas y empresa
-│   │   └── api/             # Endpoints REST API (Auth, Pacientes, Citas, Pagos, etc.)
+│   │   ├── reportes/        # Métricas, Metas de Ventas, Eficiencia de Asistentes y CSV
+│   │   ├── configuracion/   # Sucursales de Costa Rica y ajustes
+│   │   └── api/             # Endpoints REST API (Auth, Pacientes, Citas, Pagos)
 │   ├── components/          # Componentes UI encapsulados
-│   ├── lib/                 # Utilidades, servicios DTO, validaciones Zod
+│   ├── lib/                 # Utilidades, servicios DTO, datos de muestra
 │   └── types/               # Definiciones de TypeScript
 ├── tests/
 │   └── test_app.py          # Suite de pruebas automatizadas
@@ -42,34 +43,37 @@ mj-calendario/
 
 ---
 
+## 🗄️ ¿Qué se necesita para conectar la sección de Clientes a una Base de Datos?
+
+Para que la sección de clientes guarde la información de manera persistente en una base de datos de producción (PostgreSQL, Supabase, Neon, CockroachDB o SQLite), se requiere lo siguiente:
+
+1. **Servidor / Proveedor de Base de Datos:**
+   - Una URL de conexión relacional, por ejemplo en Supabase, Neon.tech o PostgreSQL (`postgresql://usuario:password@host:5432/dbname`).
+2. **Variable de Entorno (`.env`):**
+   ```env
+   DATABASE_URL="postgresql://usuario:password@host:5432/dbname"
+   ```
+3. **Ejecución de Migraciones Prisma:**
+   ```bash
+   npx prisma migrate dev --name init
+   ```
+4. **Comando de Generación del Cliente Prisma:**
+   ```bash
+   npx prisma generate
+   ```
+5. **Endpoints REST API ya implementados:**
+   - `GET /api/patients` (Obtiene todos los clientes)
+   - `POST /api/patients` (Guarda clientes con Cédula, Correo, Teléfono, Residencia y Membresía MJ)
+
+---
+
 ## 🛠️ Tecnologías Empleadas
 
 - **Frontend:** React, Next.js, TypeScript, Tailwind CSS, Lucide Icons, FullCalendar / Custom Schedule UI.
 - **Backend:** Next.js REST API Handlers / Node.js, DTOs con Zod.
-- **Base de Datos:** Prisma ORM (SQLite en entorno de pruebas / PostgreSQL en producción).
-- **Integraciones:** WhatsApp Web API (URLs prellenadas `https://wa.me/`).
+- **Base de Datos:** Prisma ORM (SQLite en entorno local / PostgreSQL en producción).
+- **Integraciones:** WhatsApp Web API (`https://wa.me/`).
 - **Pruebas:** Python Unittest / Vitest.
-
----
-
-## 📊 Módulos Principales
-
-1. **Dashboard & Indicadores:**
-   - Citas del día, pacientes de hoy, ingresos diarios, abonos pendientes y recordatorios por enviar.
-2. **Agenda & Calendario Pro:**
-   - Vista por Día, Semana y Mes.
-   - Código de colores por tipo de tratamiento (Faciales: Azul, Masajes: Verde, Láser: Morado, Depilación: Rosado, Corporales: Naranja, Otros: Gris).
-   - Modal interactivo para reagendar, duplicar, cancelar o confirmar citas.
-3. **Expediente de Pacientes:**
-   - Datos personales, historial de tratamientos, saldo/abonos, fotografías, alergias y consentimientos.
-4. **Catálogo de Tratamientos:**
-   - Gestión de servicios, precios, duraciones, categorías y colores.
-5. **Recordatorios de WhatsApp:**
-   - Generación instantánea de mensajes prellenados (Recordatorio de cita, confirmación, cancelación, cumpleaños, promociones) para envío manual supervisado.
-6. **Reportes & Exportación:**
-   - Reportes detallados de ingresos, cancelaciones, pacientes nuevos/frecuentes y exportación en CSV/Excel.
-7. **Seguridad y Roles:**
-   - Roles definidos: Administrador, Recepción, Especialista.
 
 ---
 
