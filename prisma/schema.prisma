@@ -1,0 +1,106 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  role      String   @default("Recepción") // Administrador, Recepción, Especialista
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Patient {
+  id           String        @id @default(uuid())
+  firstName    String
+  lastName     String
+  phone        String
+  whatsapp     String
+  email        String?
+  dob          DateTime?
+  gender       String?
+  address      String?
+  allergies    String?
+  notes        String?
+  consent      Boolean       @default(false)
+  appointments Appointment[]
+  payments     Payment[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Treatment {
+  id           String        @id @default(uuid())
+  name         String
+  category     String        // Faciales, Masajes, Láser, Depilación, Corporales, Otros
+  durationMins Int           @default(60)
+  price        Float
+  color        String        @default("#3B82F6")
+  description  String?
+  active       Boolean       @default(true)
+  appointments Appointment[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Professional {
+  id           String        @id @default(uuid())
+  name         String
+  specialty    String?
+  active       Boolean       @default(true)
+  appointments Appointment[]
+}
+
+model Cabin {
+  id           String        @id @default(uuid())
+  name         String
+  appointments Appointment[]
+}
+
+model Appointment {
+  id             String       @id @default(uuid())
+  patientId      String
+  patient        Patient      @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  treatmentId    String
+  treatment      Treatment    @relation(fields: [treatmentId], references: [id])
+  professionalId String?
+  professional   Professional? @relation(fields: [professionalId], references: [id])
+  cabinId        String?
+  cabin          Cabin?       @relation(fields: [cabinId], references: [id])
+  dateTime       DateTime
+  durationMins   Int          @default(60)
+  price          Float
+  deposit        Float        @default(0)
+  status         String       @default("Pendiente") // Pendiente, Confirmada, Completada, Cancelada
+  notes          String?
+  payments       Payment[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model Payment {
+  id            String       @id @default(uuid())
+  patientId     String
+  patient       Patient      @relation(fields: [patientId], references: [id])
+  appointmentId String?
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id])
+  amount        Float
+  paymentMethod String       // Transferencia, SINPE, Tarjeta, Efectivo
+  voucher       String?
+  createdAt     DateTime     @default(now())
+}
+
+model Setting {
+  id          String @id @default("default")
+  companyName String @default("MJ Estética")
+  logoUrl     String?
+  phone       String @default("+506 8888-8888")
+  address     String @default("San José, Costa Rica")
+  reminderTpl String @default("Hola {nombre}. Le recordamos su cita de {tratamiento} el día {fecha} a las {hora}. MJ Estética.")
+}
