@@ -67,8 +67,9 @@ export const initialPatients: Patient[] = [
     allergies: 'Ninguna',
     notes: 'Prefiere citas en horario matutino.',
     consent: true,
-    hasMembership: true, // Membresía MJ Activa
+    hasMembership: true,
     crmStage: 'Cliente Fidelizado',
+    sourceChannel: 'WhatsApp',
     createdAt: new Date().toISOString(),
   },
   {
@@ -86,6 +87,7 @@ export const initialPatients: Patient[] = [
     consent: true,
     hasMembership: false,
     crmStage: 'Cita Agendada',
+    sourceChannel: 'Instagram',
     createdAt: new Date().toISOString(),
   },
   {
@@ -100,8 +102,23 @@ export const initialPatients: Patient[] = [
     gender: 'Femenino',
     allergies: 'Ninguna',
     consent: true,
-    hasMembership: true, // Membresía MJ Activa
+    hasMembership: true,
     crmStage: 'Nuevo Lead',
+    sourceChannel: 'Formulario Web',
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'p4',
+    fullName: 'STEFANIE CHAVARRÍA SOLANO',
+    cedula: '1-4444-0444',
+    email: 'stefanie.chavarria@example.com',
+    phone: '+506 8888-4444',
+    whatsapp: '50688884444',
+    residence: 'Belén, Heredia',
+    consent: true,
+    hasMembership: false,
+    crmStage: 'Contactado',
+    sourceChannel: 'Messenger',
     createdAt: new Date().toISOString(),
   },
 ];
@@ -119,9 +136,17 @@ export const initialCRMInteractions: CRMInteraction[] = [
     id: 'crm-2',
     patientId: 'p3',
     patientName: 'FERNANDA LÓPEZ SÁNCHEZ',
-    type: 'Llamada',
-    note: 'Consulta por tratamiento de Depilación Láser Diodo con descuento de Membresía MJ.',
+    type: 'Formulario Web',
+    note: 'Lead recibido desde el Formulario Web de la clínica solicitando cita de Depilación Láser.',
     date: '2026-11-04',
+  },
+  {
+    id: 'crm-3',
+    patientId: 'p4',
+    patientName: 'STEFANIE CHAVARRÍA SOLANO',
+    type: 'Messenger',
+    note: 'Consulta por Facebook Messenger sobre costos de paquetes reductivos.',
+    date: '2026-11-03',
   },
 ];
 

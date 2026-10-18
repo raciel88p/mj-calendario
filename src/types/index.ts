@@ -13,6 +13,7 @@ export interface Patient {
   consent: boolean;
   hasMembership: boolean; // Membresía MJ
   crmStage: 'Nuevo Lead' | 'Contactado' | 'Cita Agendada' | 'Cliente Fidelizado' | 'Inactivo';
+  sourceChannel?: 'WhatsApp' | 'Messenger' | 'Instagram' | 'Formulario Web' | 'Otro';
   createdAt: string;
 }
 
@@ -20,7 +21,7 @@ export interface CRMInteraction {
   id: string;
   patientId: string;
   patientName: string;
-  type: 'Llamada' | 'WhatsApp' | 'Correo' | 'Reunión';
+  type: 'Llamada' | 'WhatsApp' | 'Messenger' | 'Instagram' | 'Correo' | 'Formulario Web' | 'Reunión';
   note: string;
   date: string;
 }
