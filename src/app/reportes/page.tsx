@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { initialAppointments, initialPatients } from '@/lib/data';
-import { BarChart3, Download, TrendingUp, Users, DollarSign, Calendar, Target, Award, UserCheck, Plus, Edit, Trash2, Settings, X, CheckCircle2, Sparkles } from 'lucide-react';
+import { BarChart3, Download, TrendingUp, Users, DollarSign, Calendar, Target, Award, UserCheck, Plus, Edit, Trash2, Settings, X, CheckCircle2, Sparkles, Save } from 'lucide-react';
 
 interface AssistantTarget {
   id: string;
@@ -13,65 +13,101 @@ interface AssistantTarget {
   conversionRate: number;
 }
 
+const DEFAULT_ASSISTANTS: AssistantTarget[] = [
+  {
+    id: 'asist-1',
+    name: 'Asistente 1 - Valeria Castro',
+    targetAmount: 850000,
+    currentSales: 720000,
+    completedAppointments: 24,
+    conversionRate: 92,
+  },
+  {
+    id: 'asist-2',
+    name: 'Asistente 2 - Daniela Solano',
+    targetAmount: 850000,
+    currentSales: 680000,
+    completedAppointments: 21,
+    conversionRate: 88,
+  },
+  {
+    id: 'asist-3',
+    name: 'Asistente 3 - Camila Vargas',
+    targetAmount: 800000,
+    currentSales: 590000,
+    completedAppointments: 18,
+    conversionRate: 84,
+  },
+  {
+    id: 'asist-4',
+    name: 'Asistente 4 - Andrea Jiménez',
+    targetAmount: 800000,
+    currentSales: 610000,
+    completedAppointments: 19,
+    conversionRate: 85,
+  },
+  {
+    id: 'asist-5',
+    name: 'Asistente 5 - Sofía Monge',
+    targetAmount: 850000,
+    currentSales: 750000,
+    completedAppointments: 25,
+    conversionRate: 95,
+  },
+  {
+    id: 'asist-6',
+    name: 'Asistente 6 - Nicole Bolaños',
+    targetAmount: 850000,
+    currentSales: 700000,
+    completedAppointments: 22,
+    conversionRate: 90,
+  },
+];
+
 export default function ReportesPage() {
   const [appointments] = useState(initialAppointments);
 
-  // Global Clinic Sales Target State
-  const [globalSalesTarget, setGlobalSalesTarget] = useState(5000000); // ₡5,000,000 default
+  // Global Clinic Sales Target State + Persistence
+  const [globalSalesTarget, setGlobalSalesTarget] = useState(5000000);
   const [isGlobalTargetModalOpen, setIsGlobalTargetModalOpen] = useState(false);
   const [tempGlobalTarget, setTempGlobalTarget] = useState(5000000);
 
-  // 6 Clinic Assistants State + CRUD
-  const [assistants, setAssistants] = useState<AssistantTarget[]>([
-    {
-      id: 'asist-1',
-      name: 'Asistente 1 - Valeria Castro',
-      targetAmount: 850000,
-      currentSales: 720000,
-      completedAppointments: 24,
-      conversionRate: 92,
-    },
-    {
-      id: 'asist-2',
-      name: 'Asistente 2 - Daniela Solano',
-      targetAmount: 850000,
-      currentSales: 680000,
-      completedAppointments: 21,
-      conversionRate: 88,
-    },
-    {
-      id: 'asist-3',
-      name: 'Asistente 3 - Camila Vargas',
-      targetAmount: 800000,
-      currentSales: 590000,
-      completedAppointments: 18,
-      conversionRate: 84,
-    },
-    {
-      id: 'asist-4',
-      name: 'Asistente 4 - Andrea Jiménez',
-      targetAmount: 800000,
-      currentSales: 610000,
-      completedAppointments: 19,
-      conversionRate: 85,
-    },
-    {
-      id: 'asist-5',
-      name: 'Asistente 5 - Sofía Monge',
-      targetAmount: 850000,
-      currentSales: 750000,
-      completedAppointments: 25,
-      conversionRate: 95,
-    },
-    {
-      id: 'asist-6',
-      name: 'Asistente 6 - Nicole Bolaños',
-      targetAmount: 850000,
-      currentSales: 700000,
-      completedAppointments: 22,
-      conversionRate: 90,
-    },
-  ]);
+  // Assistants State + Persistence
+  const [assistants, setAssistants] = useState<AssistantTarget[]>(DEFAULT_ASSISTANTS);
+  const [saveSuccessMsg, setSaveSuccessMsg] = useState(false);
+
+  // Load saved data from localStorage on client mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedTarget = localStorage.getItem('mj_global_sales_target');
+      if (savedTarget) {
+        setGlobalSalesTarget(Number(savedTarget));
+      }
+
+      const savedAssistants = localStorage.getItem('mj_assistants_data');
+      if (savedAssistants) {
+        try {
+          setAssistants(JSON.parse(savedAssistants));
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+  }, []);
+
+  // Helper to persist assistants to localStorage
+  const saveAssistantsToStorage = (updated: AssistantTarget[]) => {
+    setAssistants(updated);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('mj_assistants_data', JSON.stringify(updated));
+    }
+    triggerSaveMessage();
+  };
+
+  const triggerSaveMessage = () => {
+    setSaveSuccessMsg(true);
+    setTimeout(() => setSaveSuccessMsg(false), 3000);
+  };
 
   // Modal State for Assistant CRUD & Goal Configuration
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -101,20 +137,19 @@ export default function ReportesPage() {
 
   const handleSaveAssistant = (e: React.FormEvent) => {
     e.preventDefault();
+    let updated: AssistantTarget[];
     if (selectedAsist) {
-      setAssistants(
-        assistants.map((a) =>
-          a.id === selectedAsist.id
-            ? {
-                ...a,
-                name: asistName,
-                targetAmount: Number(targetAmount),
-                currentSales: Number(currentSales),
-                completedAppointments: Number(completedAppointments),
-                conversionRate: Number(conversionRate),
-              }
-            : a
-        )
+      updated = assistants.map((a) =>
+        a.id === selectedAsist.id
+          ? {
+              ...a,
+              name: asistName,
+              targetAmount: Number(targetAmount),
+              currentSales: Number(currentSales),
+              completedAppointments: Number(completedAppointments),
+              conversionRate: Number(conversionRate),
+            }
+          : a
       );
     } else {
       const newAsist: AssistantTarget = {
@@ -125,18 +160,25 @@ export default function ReportesPage() {
         completedAppointments: Number(completedAppointments),
         conversionRate: Number(conversionRate),
       };
-      setAssistants([...assistants, newAsist]);
+      updated = [...assistants, newAsist];
     }
+    saveAssistantsToStorage(updated);
     setIsModalOpen(false);
   };
 
   const handleDeleteAssistant = (id: string) => {
-    setAssistants(assistants.filter((a) => a.id !== id));
+    const updated = assistants.filter((a) => a.id !== id);
+    saveAssistantsToStorage(updated);
   };
 
   const handleSaveGlobalTarget = (e: React.FormEvent) => {
     e.preventDefault();
-    setGlobalSalesTarget(Number(tempGlobalTarget));
+    const newTarget = Number(tempGlobalTarget);
+    setGlobalSalesTarget(newTarget);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('mj_global_sales_target', newTarget.toString());
+    }
+    triggerSaveMessage();
     setIsGlobalTargetModalOpen(false);
   };
 
@@ -184,6 +226,13 @@ export default function ReportesPage() {
           Exportar Reporte CSV
         </button>
       </div>
+
+      {saveSuccessMsg && (
+        <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-bold flex items-center gap-2 shadow-2xs">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+          ¡Cambios guardados con éxito en la base de datos local!
+        </div>
+      )}
 
       {/* 1. SECCIÓN DESTACADA: META GLOBAL DE VENTAS DE LA ESTÉTICA */}
       <div className="bg-gradient-to-r from-emerald-50 via-white to-teal-50 rounded-2xl p-6 border border-emerald-200 shadow-sm space-y-4">
@@ -418,9 +467,9 @@ export default function ReportesPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 shadow-2xs"
+                  className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 shadow-2xs flex items-center gap-1"
                 >
-                  Guardar Meta Global
+                  <Save className="w-4 h-4" /> Guardar Meta Global
                 </button>
               </div>
             </form>
@@ -509,9 +558,9 @@ export default function ReportesPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-purple-600 text-white rounded-xl text-xs font-semibold hover:bg-purple-700 shadow-xs"
+                  className="px-4 py-2 bg-purple-600 text-white rounded-xl text-xs font-semibold hover:bg-purple-700 shadow-xs flex items-center gap-1"
                 >
-                  Guardar Cambios
+                  <Save className="w-3.5 h-3.5" /> Guardar Cambios
                 </button>
               </div>
             </form>
