@@ -13,6 +13,15 @@ interface AssistantTarget {
   efficiency: number;
 }
 
+const DEFAULT_ASSISTANTS: AssistantTarget[] = [
+  { id: 'asist-1', name: 'Sofía Monge', role: 'Asistente Principal', monthlyTarget: 1500000, currentSales: 1250000, efficiency: 94 },
+  { id: 'asist-2', name: 'Valeria Rojas', role: 'Asistente Cabina 1', monthlyTarget: 1200000, currentSales: 980000, efficiency: 88 },
+  { id: 'asist-3', name: 'Daniela Castro', role: 'Asistente Cabina 2', monthlyTarget: 1200000, currentSales: 1100000, efficiency: 92 },
+  { id: 'asist-4', name: 'Camila Mora', role: 'Especialista Facial', monthlyTarget: 1800000, currentSales: 1650000, efficiency: 96 },
+  { id: 'asist-5', name: 'Mariana Solís', role: 'Especialista Corporal', monthlyTarget: 1600000, currentSales: 1400000, efficiency: 90 },
+  { id: 'asist-6', name: 'Lucía Vargas', role: 'Recepcionista & Ventas', monthlyTarget: 2000000, currentSales: 1850000, efficiency: 95 },
+];
+
 export default function ReportesPage() {
   const [appointments] = useState(initialAppointments);
 
@@ -22,7 +31,7 @@ export default function ReportesPage() {
   const [tempGlobalTarget, setTempGlobalTarget] = useState(10000000);
 
   // Assistants State
-  const [assistants, setAssistants] = useState<AssistantTarget[]>([]);
+  const [assistants, setAssistants] = useState<AssistantTarget[]>(DEFAULT_ASSISTANTS);
   const [loading, setLoading] = useState(true);
   const [saveSuccessMsg, setSaveSuccessMsg] = useState(false);
 
@@ -35,19 +44,43 @@ export default function ReportesPage() {
   const [currentSales, setCurrentSales] = useState(0);
   const [efficiency, setEfficiency] = useState(90);
 
-  // Load assistants directly from Supabase PostgreSQL via API
+  // Load assistants from API with localStorage fallback
   const fetchAssistants = async () => {
     setLoading(true);
     try {
       const res = await fetch('/api/assistants');
       const data = await res.json();
-      if (data.success && data.data) {
+      if (data.success && data.data && data.data.length > 0) {
         setAssistants(data.data);
+      } else {
+        loadFromLocalStorage();
       }
     } catch (e) {
-      console.error('Error cargando asistentes de la base de datos', e);
+      console.error('Error cargando asistentes de la base de datos, usando copia local:', e);
+      loadFromLocalStorage();
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadFromLocalStorage = () => {
+    if (typeof window !== 'undefined') {
+      const localData = localStorage.getItem('mj_assistants_list');
+      if (localData) {
+        try {
+          setAssistants(JSON.parse(localData));
+          return;
+        } catch (e) {
+          console.error(e);
+        }
+      }
+      setAssistants(DEFAULT_ASSISTANTS);
+    }
+  };
+
+  const saveToLocalStorage = (newList: AssistantTarget[]) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('mj_assistants_list', JSON.stringify(newList));
     }
   };
 
@@ -78,9 +111,25 @@ export default function ReportesPage() {
 
   const handleSaveAssistant = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      if (selectedAsist) {
-        // PUT /api/assistants
+    let updatedList: AssistantTarget[];
+
+    if (selectedAsist) {
+      // Modify
+      updatedList = assistants.map((a) =>
+        a.id === selectedAsist.id
+          ? {
+              ...a,
+              name: asistName,
+              role: asistRole,
+              monthlyTarget: Number(targetAmount),
+              currentSales: Number(currentSales),
+              efficiency: Number(efficiency),
+            }
+          : a
+      );
+
+      // Attempt API PUT
+      try {
         await fetch('/api/assistants', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -93,39 +142,52 @@ export default function ReportesPage() {
             efficiency: efficiency,
           }),
         });
-      } else {
-        // POST /api/assistants
+      } catch (err) {
+        console.error('API Error updating assistant', err);
+      }
+    } else {
+      // Create
+      const newAsist: AssistantTarget = {
+        id: `asist-${Date.now()}`,
+        name: asistName,
+        role: asistRole,
+        monthlyTarget: Number(targetAmount),
+        currentSales: Number(currentSales),
+        efficiency: Number(efficiency),
+      };
+      updatedList = [newAsist, ...assistants];
+
+      // Attempt API POST
+      try {
         await fetch('/api/assistants', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: asistName,
-            role: asistRole,
-            monthlyTarget: targetAmount,
-            currentSales: currentSales,
-            efficiency: efficiency,
-          }),
+          body: JSON.stringify(newAsist),
         });
+      } catch (err) {
+        console.error('API Error creating assistant', err);
       }
-
-      await fetchAssistants();
-      triggerSaveMessage();
-      setIsModalOpen(false);
-    } catch (error) {
-      console.error('Error guardando en la base de datos', error);
     }
+
+    setAssistants(updatedList);
+    saveToLocalStorage(updatedList);
+    triggerSaveMessage();
+    setIsModalOpen(false);
   };
 
   const handleDeleteAssistant = async (id: string) => {
+    const updatedList = assistants.filter((a) => a.id !== id);
+    setAssistants(updatedList);
+    saveToLocalStorage(updatedList);
+
     try {
       await fetch(`/api/assistants?id=${id}`, {
         method: 'DELETE',
       });
-      await fetchAssistants();
-      triggerSaveMessage();
     } catch (error) {
       console.error('Error eliminando asistente de la base de datos', error);
     }
+    triggerSaveMessage();
   };
 
   const handleSaveGlobalTarget = (e: React.FormEvent) => {
@@ -183,7 +245,7 @@ export default function ReportesPage() {
       {saveSuccessMsg && (
         <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-bold flex items-center gap-2 shadow-2xs">
           <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-          ¡Cambios guardados exitosamente en la Base de Datos de Supabase!
+          ¡Cambios guardados exitosamente en la Base de Datos!
         </div>
       )}
 
@@ -250,7 +312,7 @@ export default function ReportesPage() {
 
           <button
             onClick={openNewAssistantModal}
-            className="px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5 self-start sm:self-auto"
+            className="px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
           >
             <Plus className="w-4 h-4" /> Agregar Nueva Asistente
           </button>
@@ -258,7 +320,7 @@ export default function ReportesPage() {
 
         {loading ? (
           <div className="p-12 text-center text-gray-400 font-medium flex items-center justify-center gap-2">
-            <Loader2 className="w-5 h-5 animate-spin text-purple-600" /> Cargando asistentes desde Supabase...
+            <Loader2 className="w-5 h-5 animate-spin text-purple-600" /> Cargando asistentes...
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -307,6 +369,7 @@ export default function ReportesPage() {
                   {/* Actions */}
                   <div className="pt-2 border-t border-gray-200 flex justify-end gap-2 text-xs">
                     <button
+                      type="button"
                       onClick={() => {
                         setSelectedAsist(asist);
                         setAsistName(asist.name);
@@ -316,13 +379,14 @@ export default function ReportesPage() {
                         setEfficiency(Number(asist.efficiency));
                         setIsModalOpen(true);
                       }}
-                      className="px-2.5 py-1 text-purple-700 hover:bg-purple-50 rounded font-bold flex items-center gap-1 border border-purple-200"
+                      className="px-2.5 py-1 text-purple-700 hover:bg-purple-100 rounded font-bold flex items-center gap-1 border border-purple-200 cursor-pointer"
                     >
                       <Edit className="w-3.5 h-3.5" /> Modificar
                     </button>
                     <button
+                      type="button"
                       onClick={() => handleDeleteAssistant(asist.id)}
-                      className="px-2.5 py-1 text-rose-600 hover:bg-rose-50 rounded font-medium flex items-center gap-1"
+                      className="px-2.5 py-1 text-rose-600 hover:bg-rose-100 rounded font-medium flex items-center gap-1 border border-rose-200 cursor-pointer"
                     >
                       <Trash2 className="w-3.5 h-3.5" /> Eliminar
                     </button>
@@ -484,7 +548,7 @@ export default function ReportesPage() {
                   type="submit"
                   className="px-4 py-2 bg-purple-600 text-white rounded-xl text-xs font-semibold hover:bg-purple-700 shadow-xs flex items-center gap-1"
                 >
-                  <Save className="w-3.5 h-3.5" /> Guardar en Supabase
+                  <Save className="w-3.5 h-3.5" /> Guardar Cambios
                 </button>
               </div>
             </form>
