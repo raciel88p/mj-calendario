@@ -1,183 +1,136 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { initialAppointments, initialPatients } from '@/lib/data';
-import { BarChart3, Download, TrendingUp, Users, DollarSign, Calendar, Target, Award, UserCheck, Plus, Edit, Trash2, Settings, X, CheckCircle2, Sparkles, Save } from 'lucide-react';
+import { initialAppointments } from '@/lib/data';
+import { BarChart3, Download, Target, UserCheck, Plus, Edit, Trash2, X, CheckCircle2, Save, Loader2 } from 'lucide-react';
 
 interface AssistantTarget {
   id: string;
   name: string;
-  targetAmount: number;
+  role: string;
+  monthlyTarget: number;
   currentSales: number;
-  completedAppointments: number;
-  conversionRate: number;
+  efficiency: number;
 }
-
-const DEFAULT_ASSISTANTS: AssistantTarget[] = [
-  {
-    id: 'asist-1',
-    name: 'Asistente 1 - Valeria Castro',
-    targetAmount: 850000,
-    currentSales: 720000,
-    completedAppointments: 24,
-    conversionRate: 92,
-  },
-  {
-    id: 'asist-2',
-    name: 'Asistente 2 - Daniela Solano',
-    targetAmount: 850000,
-    currentSales: 680000,
-    completedAppointments: 21,
-    conversionRate: 88,
-  },
-  {
-    id: 'asist-3',
-    name: 'Asistente 3 - Camila Vargas',
-    targetAmount: 800000,
-    currentSales: 590000,
-    completedAppointments: 18,
-    conversionRate: 84,
-  },
-  {
-    id: 'asist-4',
-    name: 'Asistente 4 - Andrea Jiménez',
-    targetAmount: 800000,
-    currentSales: 610000,
-    completedAppointments: 19,
-    conversionRate: 85,
-  },
-  {
-    id: 'asist-5',
-    name: 'Asistente 5 - Sofía Monge',
-    targetAmount: 850000,
-    currentSales: 750000,
-    completedAppointments: 25,
-    conversionRate: 95,
-  },
-  {
-    id: 'asist-6',
-    name: 'Asistente 6 - Nicole Bolaños',
-    targetAmount: 850000,
-    currentSales: 700000,
-    completedAppointments: 22,
-    conversionRate: 90,
-  },
-];
 
 export default function ReportesPage() {
   const [appointments] = useState(initialAppointments);
 
-  // Global Clinic Sales Target State + Persistence
-  const [globalSalesTarget, setGlobalSalesTarget] = useState(5000000);
+  // Global Clinic Sales Target State
+  const [globalSalesTarget, setGlobalSalesTarget] = useState(10000000);
   const [isGlobalTargetModalOpen, setIsGlobalTargetModalOpen] = useState(false);
-  const [tempGlobalTarget, setTempGlobalTarget] = useState(5000000);
+  const [tempGlobalTarget, setTempGlobalTarget] = useState(10000000);
 
-  // Assistants State + Persistence
-  const [assistants, setAssistants] = useState<AssistantTarget[]>(DEFAULT_ASSISTANTS);
+  // Assistants State
+  const [assistants, setAssistants] = useState<AssistantTarget[]>([]);
+  const [loading, setLoading] = useState(true);
   const [saveSuccessMsg, setSaveSuccessMsg] = useState(false);
 
-  // Load saved data from localStorage on client mount
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const savedTarget = localStorage.getItem('mj_global_sales_target');
-      if (savedTarget) {
-        setGlobalSalesTarget(Number(savedTarget));
-      }
+  // Modal State for Assistant CRUD & Goal Configuration
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedAsist, setSelectedAsist] = useState<AssistantTarget | null>(null);
+  const [asistName, setAsistName] = useState('');
+  const [asistRole, setAsistRole] = useState('Asistente Clínico');
+  const [targetAmount, setTargetAmount] = useState(1500000);
+  const [currentSales, setCurrentSales] = useState(0);
+  const [efficiency, setEfficiency] = useState(90);
 
-      const savedAssistants = localStorage.getItem('mj_assistants_data');
-      if (savedAssistants) {
-        try {
-          setAssistants(JSON.parse(savedAssistants));
-        } catch (e) {
-          console.error(e);
-        }
+  // Load assistants directly from Supabase PostgreSQL via API
+  const fetchAssistants = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/assistants');
+      const data = await res.json();
+      if (data.success && data.data) {
+        setAssistants(data.data);
       }
+    } catch (e) {
+      console.error('Error cargando asistentes de la base de datos', e);
+    } finally {
+      setLoading(false);
     }
-  }, []);
-
-  // Helper to persist assistants to localStorage
-  const saveAssistantsToStorage = (updated: AssistantTarget[]) => {
-    setAssistants(updated);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('mj_assistants_data', JSON.stringify(updated));
-    }
-    triggerSaveMessage();
   };
+
+  useEffect(() => {
+    fetchAssistants();
+  }, []);
 
   const triggerSaveMessage = () => {
     setSaveSuccessMsg(true);
     setTimeout(() => setSaveSuccessMsg(false), 3000);
   };
 
-  // Modal State for Assistant CRUD & Goal Configuration
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedAsist, setSelectedAsist] = useState<AssistantTarget | null>(null);
-  const [asistName, setAsistName] = useState('');
-  const [targetAmount, setTargetAmount] = useState(850000);
-  const [currentSales, setCurrentSales] = useState(500000);
-  const [completedAppointments, setCompletedAppointments] = useState(15);
-  const [conversionRate, setConversionRate] = useState(90);
-
   // Dynamic calculations
-  const totalRevenue = assistants.reduce((sum, a) => sum + a.currentSales, 0);
+  const totalRevenue = assistants.reduce((sum, a) => sum + Number(a.currentSales), 0);
   const targetProgressPct = Math.min(Math.round((totalRevenue / (globalSalesTarget || 1)) * 100), 100);
-
   const totalPending = appointments.reduce((sum, a) => sum + (a.price - a.deposit), 0);
   const totalAppointments = appointments.length;
 
   const openNewAssistantModal = () => {
     setSelectedAsist(null);
-    setAsistName(`Asistente ${assistants.length + 1} - `);
-    setTargetAmount(850000);
+    setAsistName('');
+    setAsistRole('Asistente Clínico');
+    setTargetAmount(1500000);
     setCurrentSales(0);
-    setCompletedAppointments(0);
-    setConversionRate(85);
+    setEfficiency(90);
     setIsModalOpen(true);
   };
 
-  const handleSaveAssistant = (e: React.FormEvent) => {
+  const handleSaveAssistant = async (e: React.FormEvent) => {
     e.preventDefault();
-    let updated: AssistantTarget[];
-    if (selectedAsist) {
-      updated = assistants.map((a) =>
-        a.id === selectedAsist.id
-          ? {
-              ...a,
-              name: asistName,
-              targetAmount: Number(targetAmount),
-              currentSales: Number(currentSales),
-              completedAppointments: Number(completedAppointments),
-              conversionRate: Number(conversionRate),
-            }
-          : a
-      );
-    } else {
-      const newAsist: AssistantTarget = {
-        id: `asist-${Date.now()}`,
-        name: asistName,
-        targetAmount: Number(targetAmount),
-        currentSales: Number(currentSales),
-        completedAppointments: Number(completedAppointments),
-        conversionRate: Number(conversionRate),
-      };
-      updated = [...assistants, newAsist];
+    try {
+      if (selectedAsist) {
+        // PUT /api/assistants
+        await fetch('/api/assistants', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: selectedAsist.id,
+            name: asistName,
+            role: asistRole,
+            monthlyTarget: targetAmount,
+            currentSales: currentSales,
+            efficiency: efficiency,
+          }),
+        });
+      } else {
+        // POST /api/assistants
+        await fetch('/api/assistants', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: asistName,
+            role: asistRole,
+            monthlyTarget: targetAmount,
+            currentSales: currentSales,
+            efficiency: efficiency,
+          }),
+        });
+      }
+
+      await fetchAssistants();
+      triggerSaveMessage();
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error('Error guardando en la base de datos', error);
     }
-    saveAssistantsToStorage(updated);
-    setIsModalOpen(false);
   };
 
-  const handleDeleteAssistant = (id: string) => {
-    const updated = assistants.filter((a) => a.id !== id);
-    saveAssistantsToStorage(updated);
+  const handleDeleteAssistant = async (id: string) => {
+    try {
+      await fetch(`/api/assistants?id=${id}`, {
+        method: 'DELETE',
+      });
+      await fetchAssistants();
+      triggerSaveMessage();
+    } catch (error) {
+      console.error('Error eliminando asistente de la base de datos', error);
+    }
   };
 
   const handleSaveGlobalTarget = (e: React.FormEvent) => {
     e.preventDefault();
-    const newTarget = Number(tempGlobalTarget);
-    setGlobalSalesTarget(newTarget);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('mj_global_sales_target', newTarget.toString());
-    }
+    setGlobalSalesTarget(Number(tempGlobalTarget));
     triggerSaveMessage();
     setIsGlobalTargetModalOpen(false);
   };
@@ -214,7 +167,7 @@ export default function ReportesPage() {
             Reportes, Metas de Ventas & Administrador de Asistentes
           </h1>
           <p className="text-sm text-gray-500 mt-0.5">
-            Configuración de meta global de ventas (₡) y gestión de asistentes con metas individuales.
+            Guardado 100% persistente en Supabase PostgreSQL para metas de ventas, asistentes y objetivos del mes.
           </p>
         </div>
 
@@ -230,7 +183,7 @@ export default function ReportesPage() {
       {saveSuccessMsg && (
         <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-bold flex items-center gap-2 shadow-2xs">
           <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-          ¡Cambios guardados con éxito en la base de datos local!
+          ¡Cambios guardados exitosamente en la Base de Datos de Supabase!
         </div>
       )}
 
@@ -256,7 +209,6 @@ export default function ReportesPage() {
               </span>
             </div>
 
-            {/* BOTÓN DESTACADO PARA MODIFICAR META GLOBAL */}
             <button
               onClick={() => {
                 setTempGlobalTarget(globalSalesTarget);
@@ -285,7 +237,7 @@ export default function ReportesPage() {
         </div>
       </div>
 
-      {/* 2. SECCIÓN DESTACADA: ADMINISTRADOR DE ASISTENTES */}
+      {/* 2. SECCIÓN DESTACADA: ADMINISTRADOR DE ASISTENTES (SUPABASE PERSISTENTE) */}
       <div className="bg-white rounded-2xl p-6 border border-rose-100 shadow-sm space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-3">
           <div>
@@ -293,7 +245,7 @@ export default function ReportesPage() {
               <UserCheck className="w-5 h-5 text-purple-600" />
               Administrador de Asistentes & Metas Individuales ({assistants.length})
             </h2>
-            <p className="text-xs text-gray-500">Cree asistentes, guarde cambios, edite las metas individuales en colones (₡) y revise la eficacia.</p>
+            <p className="text-xs text-gray-500">Cree, modifique o elimine asistentes y sus metas de ventas con guardado persistente en la BD.</p>
           </div>
 
           <button
@@ -304,75 +256,82 @@ export default function ReportesPage() {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {assistants.map((asist) => {
-            const pct = asist.targetAmount > 0 ? Math.min(Math.round((asist.currentSales / asist.targetAmount) * 100), 100) : 0;
+        {loading ? (
+          <div className="p-12 text-center text-gray-400 font-medium flex items-center justify-center gap-2">
+            <Loader2 className="w-5 h-5 animate-spin text-purple-600" /> Cargando asistentes desde Supabase...
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {assistants.map((asist) => {
+              const target = Number(asist.monthlyTarget) || 1;
+              const current = Number(asist.currentSales) || 0;
+              const pct = Math.min(Math.round((current / target) * 100), 100);
 
-            return (
-              <div key={asist.id} className="p-4 rounded-xl border border-gray-200 hover:border-purple-300 transition space-y-3 bg-slate-50/50 relative shadow-2xs">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-gray-900 text-sm truncate max-w-[170px]">{asist.name}</span>
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                    {asist.conversionRate}% Eficiencia
-                  </span>
-                </div>
-
-                <div className="space-y-1 text-xs text-gray-600">
-                  <p className="flex justify-between">
-                    <span>Ventas Logradas:</span>
-                    <strong className="text-emerald-700 font-extrabold">₡{asist.currentSales.toLocaleString()}</strong>
-                  </p>
-                  <p className="flex justify-between">
-                    <span>Meta Asignada:</span>
-                    <strong className="text-gray-900 font-bold">₡{asist.targetAmount.toLocaleString()}</strong>
-                  </p>
-                  <p className="flex justify-between">
-                    <span>Citas Atendidas:</span>
-                    <strong>{asist.completedAppointments} citas</strong>
-                  </p>
-                </div>
-
-                {/* Progress bar per assistant */}
-                <div className="space-y-1 pt-1 border-t border-gray-200">
-                  <div className="flex justify-between text-[11px] font-semibold text-gray-500">
-                    <span>Cumplimiento de Meta</span>
-                    <span>{pct}%</span>
+              return (
+                <div key={asist.id} className="p-4 rounded-xl border border-gray-200 hover:border-purple-300 transition space-y-3 bg-slate-50/50 relative shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-bold text-gray-900 text-sm truncate">{asist.name}</h3>
+                      <p className="text-[11px] text-gray-500">{asist.role || 'Asistente Clínico'}</p>
+                    </div>
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                      {asist.efficiency}% Eficiencia
+                    </span>
                   </div>
-                  <div className="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
-                    <div
-                      className="bg-purple-600 h-full rounded-full transition-all"
-                      style={{ width: `${pct}%` }}
-                    />
+
+                  <div className="space-y-1 text-xs text-gray-600">
+                    <p className="flex justify-between">
+                      <span>Ventas Logradas:</span>
+                      <strong className="text-emerald-700 font-extrabold">₡{current.toLocaleString()}</strong>
+                    </p>
+                    <p className="flex justify-between">
+                      <span>Meta Asignada:</span>
+                      <strong className="text-gray-900 font-bold">₡{target.toLocaleString()}</strong>
+                    </p>
+                  </div>
+
+                  {/* Progress bar per assistant */}
+                  <div className="space-y-1 pt-1 border-t border-gray-200">
+                    <div className="flex justify-between text-[11px] font-semibold text-gray-500">
+                      <span>Cumplimiento de Meta</span>
+                      <span>{pct}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
+                      <div
+                        className="bg-purple-600 h-full rounded-full transition-all"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="pt-2 border-t border-gray-200 flex justify-end gap-2 text-xs">
+                    <button
+                      onClick={() => {
+                        setSelectedAsist(asist);
+                        setAsistName(asist.name);
+                        setAsistRole(asist.role || 'Asistente Clínico');
+                        setTargetAmount(Number(asist.monthlyTarget));
+                        setCurrentSales(Number(asist.currentSales));
+                        setEfficiency(Number(asist.efficiency));
+                        setIsModalOpen(true);
+                      }}
+                      className="px-2.5 py-1 text-purple-700 hover:bg-purple-50 rounded font-bold flex items-center gap-1 border border-purple-200"
+                    >
+                      <Edit className="w-3.5 h-3.5" /> Modificar
+                    </button>
+                    <button
+                      onClick={() => handleDeleteAssistant(asist.id)}
+                      className="px-2.5 py-1 text-rose-600 hover:bg-rose-50 rounded font-medium flex items-center gap-1"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" /> Eliminar
+                    </button>
                   </div>
                 </div>
-
-                {/* Actions */}
-                <div className="pt-2 border-t border-gray-200 flex justify-end gap-2 text-xs">
-                  <button
-                    onClick={() => {
-                      setSelectedAsist(asist);
-                      setAsistName(asist.name);
-                      setTargetAmount(asist.targetAmount);
-                      setCurrentSales(asist.currentSales);
-                      setCompletedAppointments(asist.completedAppointments);
-                      setConversionRate(asist.conversionRate);
-                      setIsModalOpen(true);
-                    }}
-                    className="px-2.5 py-1 text-purple-700 hover:bg-purple-50 rounded font-bold flex items-center gap-1 border border-purple-200"
-                  >
-                    <Edit className="w-3.5 h-3.5" /> Modificar Meta
-                  </button>
-                  <button
-                    onClick={() => handleDeleteAssistant(asist.id)}
-                    className="px-2.5 py-1 text-rose-600 hover:bg-rose-50 rounded font-medium flex items-center gap-1"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" /> Eliminar
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Metrics Summary Row */}
@@ -390,42 +349,6 @@ export default function ReportesPage() {
         <div className="bg-white p-5 rounded-2xl border border-rose-100 shadow-sm">
           <p className="text-xs font-semibold text-gray-400 uppercase">Total Citas Atendidas</p>
           <h3 className="text-2xl font-bold text-amber-500 mt-1">{totalAppointments}</h3>
-        </div>
-      </div>
-
-      {/* Detail Table */}
-      <div className="bg-white rounded-2xl border border-rose-100 shadow-sm p-6 space-y-4">
-        <h2 className="font-bold text-gray-800 text-base">Desglose de Ventas y Tratamientos</h2>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr className="border-b border-gray-100 text-gray-400 uppercase font-semibold">
-                <th className="py-3 px-2">Paciente</th>
-                <th className="py-3 px-2">Tratamiento</th>
-                <th className="py-3 px-2">Precio Total</th>
-                <th className="py-3 px-2">Abono Realizado</th>
-                <th className="py-3 px-2">Saldo Pendiente</th>
-                <th className="py-3 px-2">Estado</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50 text-gray-700">
-              {appointments.map((a) => (
-                <tr key={a.id} className="hover:bg-rose-50/50 transition">
-                  <td className="py-3 px-2 font-medium text-gray-800">{a.patientName}</td>
-                  <td className="py-3 px-2">{a.treatmentName}</td>
-                  <td className="py-3 px-2 font-bold">₡{a.price.toLocaleString()}</td>
-                  <td className="py-3 px-2 text-emerald-600 font-semibold">₡{a.deposit.toLocaleString()}</td>
-                  <td className="py-3 px-2 text-rose-500 font-semibold">₡{(a.price - a.deposit).toLocaleString()}</td>
-                  <td className="py-3 px-2">
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-pink-50 text-pink-600">
-                      {a.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
         </div>
       </div>
 
@@ -477,13 +400,13 @@ export default function ReportesPage() {
         </div>
       )}
 
-      {/* Modal Configurar / Crear Asistente */}
+      {/* Modal Configurar / Crear / Modificar Asistente */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-purple-100 space-y-4">
             <div className="flex items-center justify-between border-b pb-3">
               <h3 className="text-lg font-bold text-gray-800">
-                {selectedAsist ? 'Guardar Cambios en Asistente' : 'Agregar Nueva Asistente'}
+                {selectedAsist ? 'Modificar Asistente & Meta' : 'Agregar Nueva Asistente'}
               </h3>
               <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
                 <X className="w-5 h-5" />
@@ -492,25 +415,36 @@ export default function ReportesPage() {
 
             <form onSubmit={handleSaveAssistant} className="space-y-3">
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">Nombre de la Asistente *</label>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Nombre Completo *</label>
                 <input
                   type="text"
                   required
                   value={asistName}
                   onChange={(e) => setAsistName(e.target.value)}
-                  placeholder="Ej. Asistente 7 - Lucía Morales"
+                  placeholder="Ej. Sofía Monge"
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs focus:outline-none focus:border-purple-600 font-medium"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">Meta de Ventas Individual (₡) *</label>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Puesto / Rol *</label>
+                <input
+                  type="text"
+                  required
+                  value={asistRole}
+                  onChange={(e) => setAsistRole(e.target.value)}
+                  placeholder="Ej. Asistente Principal / Especialista Facial"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs focus:outline-none focus:border-purple-600"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Meta de Ventas Mensual (₡) *</label>
                 <input
                   type="number"
                   required
                   value={targetAmount}
                   onChange={(e) => setTargetAmount(Number(e.target.value))}
-                  placeholder="850000"
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs focus:outline-none focus:border-purple-600 font-bold text-emerald-700 text-sm"
                 />
               </div>
@@ -527,25 +461,15 @@ export default function ReportesPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">Citas Atendidas</label>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">Eficacia / Conversión (%)</label>
                   <input
                     type="number"
-                    value={completedAppointments}
-                    onChange={(e) => setCompletedAppointments(Number(e.target.value))}
+                    max={100}
+                    value={efficiency}
+                    onChange={(e) => setEfficiency(Number(e.target.value))}
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs focus:outline-none focus:border-purple-600"
                   />
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">Eficacia / Conversión (%)</label>
-                <input
-                  type="number"
-                  max={100}
-                  value={conversionRate}
-                  onChange={(e) => setConversionRate(Number(e.target.value))}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs focus:outline-none focus:border-purple-600"
-                />
               </div>
 
               <div className="flex justify-end gap-2 pt-3 border-t">
@@ -560,7 +484,7 @@ export default function ReportesPage() {
                   type="submit"
                   className="px-4 py-2 bg-purple-600 text-white rounded-xl text-xs font-semibold hover:bg-purple-700 shadow-xs flex items-center gap-1"
                 >
-                  <Save className="w-3.5 h-3.5" /> Guardar Cambios
+                  <Save className="w-3.5 h-3.5" /> Guardar en Supabase
                 </button>
               </div>
             </form>
