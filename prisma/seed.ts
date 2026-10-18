@@ -47,68 +47,37 @@ async function main() {
     },
   });
 
-  const tLaser = await prisma.treatment.create({
-    data: {
-      name: 'Depilación Láser Diodo',
-      category: 'Láser',
-      durationMins: 45,
-      price: 50000,
-      color: '#8B5CF6', // Morado
-      description: 'Sesión láser zona completa.',
-    },
-  });
-
-  const tDepilacion = await prisma.treatment.create({
-    data: {
-      name: 'Depilación con Cera Sensible',
-      category: 'Depilación',
-      durationMins: 30,
-      price: 20000,
-      color: '#EC4899', // Rosado
-      description: 'Depilación cera tibia con extracto de manzanilla.',
-    },
-  });
-
-  const tCorporal = await prisma.treatment.create({
-    data: {
-      name: 'Masaje Reductivo Corporal',
-      category: 'Corporales',
-      durationMins: 75,
-      price: 40000,
-      color: '#F97316', // Naranja
-      description: 'Reducción de medidas y drenaje linfático.',
-    },
-  });
-
   // Pacientes
   const p1 = await prisma.patient.create({
     data: {
-      firstName: 'María',
-      lastName: 'González',
+      fullName: 'MARÍA GONZÁLEZ PÉREZ',
+      cedula: '1-1111-0111',
+      email: 'maria.gonzalez@example.com',
       phone: '+506 8888-1111',
       whatsapp: '50688881111',
-      email: 'maria@example.com',
-      gender: 'Femenino',
+      residence: 'Escazú, San José',
       allergies: 'Ninguna',
       notes: 'Prefiere atención en la mañana.',
       consent: true,
+      crmStage: 'Cliente Fidelizado',
     },
   });
 
   const p2 = await prisma.patient.create({
     data: {
-      firstName: 'Carla',
-      lastName: 'Rodríguez',
+      fullName: 'CARLA RODRÍGUEZ MONGE',
+      cedula: '1-2222-0222',
+      email: 'carla.rodriguez@example.com',
       phone: '+506 8888-2222',
       whatsapp: '50688882222',
-      email: 'carla@example.com',
-      gender: 'Femenino',
+      residence: 'Santa Ana, San José',
       allergies: 'Piel sensible a retinol',
       consent: true,
+      crmStage: 'Cita Agendada',
     },
   });
 
-  // Citas de hoy
+  // Citas
   const today = new Date();
   today.setHours(10, 0, 0, 0);
 

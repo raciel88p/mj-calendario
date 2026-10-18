@@ -1,4 +1,4 @@
-import { Patient, Treatment, Appointment, Payment } from '@/types';
+import { Patient, Treatment, Appointment, Payment, CRMInteraction } from '@/types';
 
 export const initialTreatments: Treatment[] = [
   {
@@ -56,31 +56,69 @@ export const initialTreatments: Treatment[] = [
 export const initialPatients: Patient[] = [
   {
     id: 'p1',
-    firstName: 'María',
-    lastName: 'González',
+    fullName: 'MARÍA GONZÁLEZ PÉRERZ',
+    cedula: '1-1111-0111',
+    email: 'maria.gonzalez@example.com',
     phone: '+506 8888-1111',
     whatsapp: '50688881111',
-    email: 'maria@example.com',
+    residence: 'Escazú, San José',
     dob: '1992-05-14',
     gender: 'Femenino',
     allergies: 'Ninguna',
     notes: 'Prefiere citas en horario matutino.',
     consent: true,
+    crmStage: 'Cliente Fidelizado',
     createdAt: new Date().toISOString(),
   },
   {
     id: 'p2',
-    firstName: 'Carla',
-    lastName: 'Rodríguez',
+    fullName: 'CARLA RODRÍGUEZ MONGE',
+    cedula: '1-2222-0222',
+    email: 'carla.rodriguez@example.com',
     phone: '+506 8888-2222',
     whatsapp: '50688882222',
-    email: 'carla@example.com',
+    residence: 'Santa Ana, San José',
     dob: '1988-11-20',
     gender: 'Femenino',
     allergies: 'Sensibilidad a retinol',
     notes: 'Alergia suave.',
     consent: true,
+    crmStage: 'Cita Agendada',
     createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'p3',
+    fullName: 'FERNANDA LÓPEZ SÁNCHEZ',
+    cedula: '1-3333-0333',
+    email: 'fernanda.lopez@example.com',
+    phone: '+506 8888-3333',
+    whatsapp: '50688883333',
+    residence: 'Curridabat, San José',
+    dob: '1995-03-10',
+    gender: 'Femenino',
+    allergies: 'Ninguna',
+    consent: true,
+    crmStage: 'Nuevo Lead',
+    createdAt: new Date().toISOString(),
+  },
+];
+
+export const initialCRMInteractions: CRMInteraction[] = [
+  {
+    id: 'crm-1',
+    patientId: 'p1',
+    patientName: 'MARÍA GONZÁLEZ PÉRERZ',
+    type: 'WhatsApp',
+    note: 'Enviada confirmación de cita para Facial Hidratante.',
+    date: '2026-11-05',
+  },
+  {
+    id: 'crm-2',
+    patientId: 'p3',
+    patientName: 'FERNANDA LÓPEZ SÁNCHEZ',
+    type: 'Llamada',
+    note: 'Consulta por tratamiento de Depilación Láser Diodo.',
+    date: '2026-11-04',
   },
 ];
 
@@ -88,7 +126,7 @@ export const initialAppointments: Appointment[] = [
   {
     id: 'a1',
     patientId: 'p1',
-    patientName: 'María González',
+    patientName: 'MARÍA GONZÁLEZ PÉRERZ',
     patientPhone: '+506 8888-1111',
     treatmentId: 't1',
     treatmentName: 'Facial Hidratante Profundo',
@@ -103,7 +141,7 @@ export const initialAppointments: Appointment[] = [
   {
     id: 'a2',
     patientId: 'p2',
-    patientName: 'Carla Rodríguez',
+    patientName: 'CARLA RODRÍGUEZ MONGE',
     patientPhone: '+506 8888-2222',
     treatmentId: 't2',
     treatmentName: 'Masaje Relajante Descontracturante',

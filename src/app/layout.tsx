@@ -1,10 +1,10 @@
 import './globals.css';
 import Link from 'next/link';
-import { Calendar, Users, Sparkles, MessageCircle, BarChart3, Settings, Home } from 'lucide-react';
+import { Calendar, Users, Sparkles, MessageCircle, BarChart3, Settings, Home, UserCheck } from 'lucide-react';
 
 export const metadata = {
-  title: 'MJ Estética - Gestión de Clínica Estética',
-  description: 'Sistema integral de administración de pacientes, agenda y tratamientos para MJ Estética',
+  title: 'MJ Estética - Gestión de Clínica Estética & CRM',
+  description: 'Sistema integral de administración de pacientes, agenda, CRM y tratamientos para MJ Estética',
 };
 
 export default function RootLayout({
@@ -25,7 +25,7 @@ export default function RootLayout({
               </div>
               <div>
                 <h1 className="font-bold text-lg tracking-wide text-gray-800">MJ Estética</h1>
-                <p className="text-xs text-amber-600 font-medium">Clínica & Agenda</p>
+                <p className="text-xs text-amber-600 font-medium">Clínica, Agenda & CRM</p>
               </div>
             </div>
 
@@ -52,7 +52,15 @@ export default function RootLayout({
                 className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-rose-50 hover:text-pink-600 transition"
               >
                 <Users className="w-4 h-4 text-pink-500" />
-                Pacientes & Expediente
+                Pacientes & Importador
+              </Link>
+
+              <Link
+                href="/crm"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-rose-50 hover:text-pink-600 transition"
+              >
+                <UserCheck className="w-4 h-4 text-purple-500" />
+                CRM & Clientes
               </Link>
 
               <Link

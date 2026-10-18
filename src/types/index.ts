@@ -1,17 +1,27 @@
 export interface Patient {
   id: string;
-  firstName: string;
-  lastName: string;
+  fullName: string;
+  cedula: string;
+  email: string;
   phone: string;
-  whatsapp: string;
-  email?: string;
+  whatsapp?: string;
+  residence?: string;
   dob?: string;
   gender?: string;
-  address?: string;
   allergies?: string;
   notes?: string;
   consent: boolean;
+  crmStage: 'Nuevo Lead' | 'Contactado' | 'Cita Agendada' | 'Cliente Fidelizado' | 'Inactivo';
   createdAt: string;
+}
+
+export interface CRMInteraction {
+  id: string;
+  patientId: string;
+  patientName: string;
+  type: 'Llamada' | 'WhatsApp' | 'Correo' | 'Reunión';
+  note: string;
+  date: string;
 }
 
 export interface Treatment {
