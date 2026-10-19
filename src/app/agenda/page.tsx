@@ -111,29 +111,26 @@ export default function AgendaPage() {
   });
 
   const [appointments, setAppointments] = useState<Appointment[]>(DEFAULT_APPOINTMENTS);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('mj_agenda_appointments');
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setAppointments(parsed);
-          }
-        } catch (e) {
-          console.error(e);
-        }
+  const fetchAppointments = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/appointments');
+      const data = await res.json();
+      if (data.success && data.data && data.data.length > 0) {
+        setAppointments(data.data);
       }
-    }
-  }, []);
-
-  const saveAppointments = (newList: Appointment[]) => {
-    setAppointments(newList);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('mj_agenda_appointments', JSON.stringify(newList));
+    } catch (e) {
+      console.error('Error fetching appointments:', e);
+    } finally {
+      setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchAppointments();
+  }, []);
 
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -191,55 +188,78 @@ export default function AgendaPage() {
     setFilters(updated);
   };
 
-  const handleSaveAppointment = (e: React.FormEvent) => {
+  const handleSaveAppointment = async (e: React.FormEvent) => {
     e.preventDefault();
     const selT = initialTreatments.find((t) => t.id === treatmentId);
 
-    let updatedList: Appointment[];
+    const payload = {
+      patientName: (patientName || 'NUEVO PACIENTE').toUpperCase(),
+      patientPhone: patientPhone || '+506 8888-0000',
+      treatmentId,
+      dateTime: `2026-11-06T${slotTime}:00`,
+      durationMins: Number(duration),
+      price: Number(price),
+      deposit: Number(deposit),
+      status,
+      notes,
+    };
+
     if (selectedAppointment) {
-      updatedList = appointments.map((a) =>
-        a.id === selectedAppointment.id
-          ? {
-              ...a,
-              patientName: patientName.toUpperCase(),
-              patientPhone,
-              treatmentId,
-              treatmentName: selT?.name,
-              treatmentColor: selT?.color || '#3B82F6',
-              dateTime: `2026-11-06T${slotTime}:00`,
-              durationMins: Number(duration),
-              price: Number(price),
-              deposit: Number(deposit),
-              status,
-              notes,
-            }
-          : a
+      setAppointments(
+        appointments.map((a) =>
+          a.id === selectedAppointment.id
+            ? {
+                ...a,
+                ...payload,
+                treatmentName: selT?.name,
+                treatmentColor: selT?.color || '#3B82F6',
+              }
+            : a
+        )
       );
+      try {
+        await fetch('/api/appointments', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: selectedAppointment.id, ...payload }),
+        });
+      } catch (err) {
+        console.error(err);
+      }
     } else {
-      const newApt: Appointment = {
-        id: `apt-${Date.now()}`,
-        patientId: `p-${Date.now()}`,
-        patientName: (patientName || 'NUEVO PACIENTE').toUpperCase(),
-        patientPhone: patientPhone || '+506 8888-0000',
-        treatmentId,
-        treatmentName: selT?.name || 'Tratamiento',
-        treatmentColor: selT?.color || '#3B82F6',
-        dateTime: `2026-11-06T${slotTime}:00`,
-        durationMins: Number(duration),
-        price: Number(price),
-        deposit: Number(deposit),
-        status,
-        notes,
-      };
-      updatedList = [...appointments, newApt];
+      try {
+        const res = await fetch('/api/appointments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (data.success && data.data) {
+          setAppointments([...appointments, data.data]);
+        } else {
+          const newApt: Appointment = {
+            id: `apt-${Date.now()}`,
+            patientId: `p-${Date.now()}`,
+            ...payload,
+            treatmentName: selT?.name || 'Tratamiento',
+            treatmentColor: selT?.color || '#3B82F6',
+          };
+          setAppointments([...appointments, newApt]);
+        }
+      } catch (err) {
+        console.error(err);
+      }
     }
-    saveAppointments(updatedList);
     setIsModalOpen(false);
   };
 
-  const handleDelete = (id: string) => {
-    const updatedList = appointments.filter((a) => a.id !== id);
-    saveAppointments(updatedList);
+  const handleDelete = async (id: string) => {
+    setAppointments(appointments.filter((a) => a.id !== id));
+    try {
+      await fetch(`/api/appointments?id=${id}`, { method: 'DELETE' });
+    } catch (e) {
+      console.error(e);
+    }
     setIsModalOpen(false);
   };
 
@@ -249,7 +269,7 @@ export default function AgendaPage() {
       id: `apt-${Date.now()}`,
       patientName: `${apt.patientName} (COPIA)`,
     };
-    saveAppointments([...appointments, dup]);
+    setAppointments([...appointments, dup]);
     setIsModalOpen(false);
   };
 

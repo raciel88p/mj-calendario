@@ -27,29 +27,26 @@ import {
 
 export default function PacientesPage() {
   const [patients, setPatients] = useState<Patient[]>(initialPatients);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('mj_pacientes_list');
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setPatients(parsed);
-          }
-        } catch (e) {
-          console.error(e);
-        }
+  const fetchPatients = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/patients');
+      const data = await res.json();
+      if (data.success && data.data && data.data.length > 0) {
+        setPatients(data.data);
       }
-    }
-  }, []);
-
-  const savePatients = (newList: Patient[]) => {
-    setPatients(newList);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('mj_pacientes_list', JSON.stringify(newList));
+    } catch (err) {
+      console.error('Error fetching patients:', err);
+    } finally {
+      setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchPatients();
+  }, []);
 
   const [search, setSearch] = useState('');
   const [filterMembershipOnly, setFilterMembershipOnly] = useState(false);
@@ -120,52 +117,58 @@ export default function PacientesPage() {
     setIsModalOpen(true);
   };
 
-  const handleSavePatient = (e: React.FormEvent) => {
+  const handleSavePatient = async (e: React.FormEvent) => {
     e.preventDefault();
-    let updatedList: Patient[];
+    const payload = {
+      fullName: fullName.toUpperCase(),
+      cedula,
+      email,
+      phone,
+      whatsapp: whatsapp || phone.replace(/\D/g, ''),
+      residence,
+      dob,
+      gender,
+      allergies,
+      notes,
+      hasMembership,
+      creditEnabled,
+      crmStage,
+    };
+
     if (selectedPatient) {
-      updatedList = patients.map((p) =>
-        p.id === selectedPatient.id
-          ? {
-              ...p,
-              fullName: fullName.toUpperCase(),
-              cedula,
-              email,
-              phone,
-              whatsapp: whatsapp || phone.replace(/\D/g, ''),
-              residence,
-              dob,
-              gender,
-              allergies,
-              notes,
-              hasMembership,
-              creditEnabled,
-              crmStage,
-            }
-          : p
-      );
+      try {
+        const res = await fetch('/api/patients', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: selectedPatient.id, ...payload }),
+        });
+        const data = await res.json();
+        if (data.success && data.data) {
+          setPatients(patients.map((p) => (p.id === selectedPatient.id ? data.data : p)));
+        } else {
+          setPatients(patients.map((p) => (p.id === selectedPatient.id ? { ...p, ...payload } : p)));
+        }
+      } catch (err) {
+        console.error(err);
+      }
     } else {
-      const newP: Patient = {
-        id: `p-${Date.now()}`,
-        fullName: fullName.toUpperCase(),
-        cedula,
-        email,
-        phone,
-        whatsapp: whatsapp || phone.replace(/\D/g, ''),
-        residence,
-        dob,
-        gender,
-        allergies,
-        notes,
-        consent: true,
-        hasMembership,
-        creditEnabled,
-        crmStage,
-        createdAt: new Date().toISOString(),
-      };
-      updatedList = [...patients, newP];
+      try {
+        const res = await fetch('/api/patients', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (data.success && data.data) {
+          setPatients([data.data, ...patients]);
+        } else {
+          const newP: Patient = { id: `p-${Date.now()}`, ...payload, consent: true, createdAt: new Date().toISOString() };
+          setPatients([newP, ...patients]);
+        }
+      } catch (err) {
+        console.error(err);
+      }
     }
-    savePatients(updatedList);
     setIsModalOpen(false);
   };
 
@@ -202,8 +205,7 @@ export default function PacientesPage() {
     });
 
     if (newImportedPatients.length > 0) {
-      const updatedList = [...patients, ...newImportedPatients];
-      savePatients(updatedList);
+      setPatients((prev) => [...prev, ...newImportedPatients]);
       setImportSuccessCount(newImportedPatients.length);
       setTimeout(() => {
         setIsImportModalOpen(false);

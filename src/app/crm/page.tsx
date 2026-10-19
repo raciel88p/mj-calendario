@@ -119,32 +119,28 @@ export default function CRMPage() {
     },
   ];
 
-  // Deals State with localStorage hydration
+  // Deals State with database sync
   const [deals, setDeals] = useState<DealItem[]>(DEFAULT_DEALS);
+  const [loading, setLoading] = useState(true);
 
-  // Hydrate from localStorage on mount
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('mj_crm_deals');
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setDeals(parsed);
-          }
-        } catch (e) {
-          console.error(e);
-        }
+  const fetchDeals = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/crm');
+      const data = await res.json();
+      if (data.success && data.data && data.data.length > 0) {
+        setDeals(data.data);
       }
-    }
-  }, []);
-
-  const saveDeals = (newDeals: DealItem[]) => {
-    setDeals(newDeals);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('mj_crm_deals', JSON.stringify(newDeals));
+    } catch (e) {
+      console.error('Error fetching CRM deals:', e);
+    } finally {
+      setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchDeals();
+  }, []);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -171,15 +167,22 @@ export default function CRMPage() {
     return matchesSearch && matchesTab && matchesOwner;
   });
 
-  const moveDealStage = (dealId: string, newStage: Patient['crmStage']) => {
-    const updated = deals.map((d) => (d.id === dealId ? { ...d, stage: newStage } : d));
-    saveDeals(updated);
+  const moveDealStage = async (dealId: string, newStage: Patient['crmStage']) => {
+    setDeals((prev) => prev.map((d) => (d.id === dealId ? { ...d, stage: newStage } : d)));
+    try {
+      await fetch('/api/crm', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: dealId, stage: newStage }),
+      });
+    } catch (e) {
+      console.error('Error updating deal stage in BD:', e);
+    }
   };
 
-  const handleCreateDeal = (e: React.FormEvent) => {
+  const handleCreateDeal = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newDeal: DealItem = {
-      id: `deal-${Date.now()}`,
+    const payload = {
       title: dealTitle || 'Nuevo Negocio Estético',
       patientName: patientName.toUpperCase(),
       cedula,
@@ -189,11 +192,31 @@ export default function CRMPage() {
       value: Number(value),
       stage,
       owner,
-      closeDate: '2026-11-30',
       channel,
       hasMembership,
     };
-    saveDeals([newDeal, ...deals]);
+
+    try {
+      const res = await fetch('/api/crm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (data.success && data.data) {
+        setDeals([data.data, ...deals]);
+      } else {
+        const newDeal: DealItem = {
+          id: `deal-${Date.now()}`,
+          ...payload,
+          closeDate: '2026-11-30',
+        };
+        setDeals([newDeal, ...deals]);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+
     setIsModalOpen(false);
     setDealTitle('');
     setPatientName('');
