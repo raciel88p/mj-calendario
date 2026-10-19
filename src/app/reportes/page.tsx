@@ -87,6 +87,15 @@ export default function ReportesPage() {
 
   useEffect(() => {
     fetchAssistants();
+    if (typeof window !== 'undefined') {
+      const savedTarget = localStorage.getItem('mj_global_sales_target');
+      if (savedTarget) {
+        const val = Number(savedTarget);
+        if (!isNaN(val) && val > 0) {
+          setGlobalSalesTarget(val);
+        }
+      }
+    }
   }, []);
 
   const triggerSaveMessage = () => {
@@ -101,11 +110,16 @@ export default function ReportesPage() {
 
     try {
       // 1. Enviar guardado general a API de asistentes
-      await fetch('/api/assistants', {
+      const res = await fetch('/api/assistants', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ batch: assistants }),
       });
+      const data = await res.json();
+      if (data.success && data.data) {
+        setAssistants(data.data);
+        saveToLocalStorage(data.data);
+      }
       triggerSaveMessage();
     } catch (error) {
       console.error('Error guardando en Supabase:', error);
@@ -212,7 +226,11 @@ export default function ReportesPage() {
 
   const handleSaveGlobalTarget = (e: React.FormEvent) => {
     e.preventDefault();
-    setGlobalSalesTarget(Number(tempGlobalTarget));
+    const newTarget = Number(tempGlobalTarget);
+    setGlobalSalesTarget(newTarget);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('mj_global_sales_target', newTarget.toString());
+    }
     triggerSaveMessage();
     setIsGlobalTargetModalOpen(false);
   };

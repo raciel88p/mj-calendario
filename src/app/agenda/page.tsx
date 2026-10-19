@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { initialAppointments, initialPatients, initialTreatments, buildWhatsAppLink } from '@/lib/data';
 import { Appointment } from '@/types';
 import {
@@ -35,6 +35,66 @@ const HOURS = [
   '7pm',
 ];
 
+const DEFAULT_APPOINTMENTS: Appointment[] = [
+  {
+    id: 'apt-1',
+    patientId: 'p1',
+    patientName: 'CHAVARRIA LOPEZ MARJORIE FERNANDA',
+    patientPhone: '+506 8888-1111',
+    treatmentId: 't2',
+    treatmentName: 'Masaje Relajante Descontracturante',
+    treatmentColor: '#10B981', // Verde
+    dateTime: '2026-11-06T09:00:00',
+    durationMins: 60,
+    price: 35000,
+    deposit: 10000,
+    status: 'Confirmada',
+    notes: 'Solo 2 cabinas',
+  },
+  {
+    id: 'apt-2',
+    patientId: 'p2',
+    patientName: 'VELASQUEZ LORIA JIRLEN MILENA',
+    patientPhone: '+506 8888-2222',
+    treatmentId: 't4',
+    treatmentName: 'Depilación con Cera Sensible',
+    treatmentColor: '#EC4899', // Rosado
+    dateTime: '2026-11-06T09:00:00',
+    durationMins: 60,
+    price: 25000,
+    deposit: 5000,
+    status: 'Confirmada',
+  },
+  {
+    id: 'apt-3',
+    patientId: 'p3',
+    patientName: 'BEDOYA GONZALEZ KAREN MARIA',
+    patientPhone: '+506 8888-3333',
+    treatmentId: 't4',
+    treatmentName: 'Depilación Láser Diodo',
+    treatmentColor: '#8B5CF6', // Morado
+    dateTime: '2026-11-06T11:00:00',
+    durationMins: 60,
+    price: 45000,
+    deposit: 15000,
+    status: 'Pendiente',
+  },
+  {
+    id: 'apt-4',
+    patientId: 'p4',
+    patientName: 'CEDEÑO CASTRO CAROLL MARIA',
+    patientPhone: '+506 8888-4444',
+    treatmentId: 't2',
+    treatmentName: 'Masaje Reductivo Corporal',
+    treatmentColor: '#10B981', // Verde
+    dateTime: '2026-11-06T13:00:00',
+    durationMins: 60,
+    price: 38000,
+    deposit: 0,
+    status: 'Confirmada',
+  },
+];
+
 export default function AgendaPage() {
   const [activeTab, setActiveTab] = useState<'Agenda' | 'Citas' | 'SalaDeEspera'>('Agenda');
   const [view, setView] = useState<'Día' | 'Semana' | 'Mes'>('Día');
@@ -50,65 +110,30 @@ export default function AgendaPage() {
     'Corporales': true,
   });
 
-  const [appointments, setAppointments] = useState<Appointment[]>([
-    {
-      id: 'apt-1',
-      patientId: 'p1',
-      patientName: 'CHAVARRIA LOPEZ MARJORIE FERNANDA',
-      patientPhone: '+506 8888-1111',
-      treatmentId: 't2',
-      treatmentName: 'Masaje Relajante Descontracturante',
-      treatmentColor: '#10B981', // Verde
-      dateTime: '2026-11-06T09:00:00',
-      durationMins: 60,
-      price: 35000,
-      deposit: 10000,
-      status: 'Confirmada',
-      notes: 'Solo 2 cabinas',
-    },
-    {
-      id: 'apt-2',
-      patientId: 'p2',
-      patientName: 'VELASQUEZ LORIA JIRLEN MILENA',
-      patientPhone: '+506 8888-2222',
-      treatmentId: 't4',
-      treatmentName: 'Depilación con Cera Sensible',
-      treatmentColor: '#EC4899', // Rosado
-      dateTime: '2026-11-06T09:00:00',
-      durationMins: 60,
-      price: 25000,
-      deposit: 5000,
-      status: 'Confirmada',
-    },
-    {
-      id: 'apt-3',
-      patientId: 'p3',
-      patientName: 'BEDOYA GONZALEZ KAREN MARIA',
-      patientPhone: '+506 8888-3333',
-      treatmentId: 't4',
-      treatmentName: 'Depilación Láser Diodo',
-      treatmentColor: '#8B5CF6', // Morado
-      dateTime: '2026-11-06T11:00:00',
-      durationMins: 60,
-      price: 45000,
-      deposit: 15000,
-      status: 'Pendiente',
-    },
-    {
-      id: 'apt-4',
-      patientId: 'p4',
-      patientName: 'CEDEÑO CASTRO CAROLL MARIA',
-      patientPhone: '+506 8888-4444',
-      treatmentId: 't2',
-      treatmentName: 'Masaje Reductivo Corporal',
-      treatmentColor: '#10B981', // Verde
-      dateTime: '2026-11-06T13:00:00',
-      durationMins: 60,
-      price: 38000,
-      deposit: 0,
-      status: 'Confirmada',
-    },
-  ]);
+  const [appointments, setAppointments] = useState<Appointment[]>(DEFAULT_APPOINTMENTS);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('mj_agenda_appointments');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setAppointments(parsed);
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+  }, []);
+
+  const saveAppointments = (newList: Appointment[]) => {
+    setAppointments(newList);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('mj_agenda_appointments', JSON.stringify(newList));
+    }
+  };
 
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -170,26 +195,25 @@ export default function AgendaPage() {
     e.preventDefault();
     const selT = initialTreatments.find((t) => t.id === treatmentId);
 
+    let updatedList: Appointment[];
     if (selectedAppointment) {
-      setAppointments(
-        appointments.map((a) =>
-          a.id === selectedAppointment.id
-            ? {
-                ...a,
-                patientName: patientName.toUpperCase(),
-                patientPhone,
-                treatmentId,
-                treatmentName: selT?.name,
-                treatmentColor: selT?.color || '#3B82F6',
-                dateTime: `2026-11-06T${slotTime}:00`,
-                durationMins: Number(duration),
-                price: Number(price),
-                deposit: Number(deposit),
-                status,
-                notes,
-              }
-            : a
-        )
+      updatedList = appointments.map((a) =>
+        a.id === selectedAppointment.id
+          ? {
+              ...a,
+              patientName: patientName.toUpperCase(),
+              patientPhone,
+              treatmentId,
+              treatmentName: selT?.name,
+              treatmentColor: selT?.color || '#3B82F6',
+              dateTime: `2026-11-06T${slotTime}:00`,
+              durationMins: Number(duration),
+              price: Number(price),
+              deposit: Number(deposit),
+              status,
+              notes,
+            }
+          : a
       );
     } else {
       const newApt: Appointment = {
@@ -207,13 +231,15 @@ export default function AgendaPage() {
         status,
         notes,
       };
-      setAppointments([...appointments, newApt]);
+      updatedList = [...appointments, newApt];
     }
+    saveAppointments(updatedList);
     setIsModalOpen(false);
   };
 
   const handleDelete = (id: string) => {
-    setAppointments(appointments.filter((a) => a.id !== id));
+    const updatedList = appointments.filter((a) => a.id !== id);
+    saveAppointments(updatedList);
     setIsModalOpen(false);
   };
 
@@ -223,7 +249,7 @@ export default function AgendaPage() {
       id: `apt-${Date.now()}`,
       patientName: `${apt.patientName} (COPIA)`,
     };
-    setAppointments([...appointments, dup]);
+    saveAppointments([...appointments, dup]);
     setIsModalOpen(false);
   };
 

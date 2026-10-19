@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { initialPatients, initialCRMInteractions, buildWhatsAppLink } from '@/lib/data';
 import { Patient, CRMInteraction } from '@/types';
 import {
@@ -56,8 +56,7 @@ export default function CRMPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedOwnerFilter, setSelectedOwnerFilter] = useState('Todos');
 
-  // Deals State
-  const [deals, setDeals] = useState<DealItem[]>([
+  const DEFAULT_DEALS: DealItem[] = [
     {
       id: 'deal-1',
       title: 'Paquete Facial Hidratante + Colágeno',
@@ -118,7 +117,34 @@ export default function CRMPage() {
       channel: 'Messenger',
       hasMembership: false,
     },
-  ]);
+  ];
+
+  // Deals State with localStorage hydration
+  const [deals, setDeals] = useState<DealItem[]>(DEFAULT_DEALS);
+
+  // Hydrate from localStorage on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('mj_crm_deals');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setDeals(parsed);
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+  }, []);
+
+  const saveDeals = (newDeals: DealItem[]) => {
+    setDeals(newDeals);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('mj_crm_deals', JSON.stringify(newDeals));
+    }
+  };
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -146,9 +172,8 @@ export default function CRMPage() {
   });
 
   const moveDealStage = (dealId: string, newStage: Patient['crmStage']) => {
-    setDeals((prev) =>
-      prev.map((d) => (d.id === dealId ? { ...d, stage: newStage } : d))
-    );
+    const updated = deals.map((d) => (d.id === dealId ? { ...d, stage: newStage } : d));
+    saveDeals(updated);
   };
 
   const handleCreateDeal = (e: React.FormEvent) => {
@@ -168,7 +193,7 @@ export default function CRMPage() {
       channel,
       hasMembership,
     };
-    setDeals([newDeal, ...deals]);
+    saveDeals([newDeal, ...deals]);
     setIsModalOpen(false);
     setDealTitle('');
     setPatientName('');

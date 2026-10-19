@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { initialPatients, buildWhatsAppLink } from '@/lib/data';
 import { Patient } from '@/types';
 import {
@@ -27,6 +27,30 @@ import {
 
 export default function PacientesPage() {
   const [patients, setPatients] = useState<Patient[]>(initialPatients);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('mj_pacientes_list');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setPatients(parsed);
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+  }, []);
+
+  const savePatients = (newList: Patient[]) => {
+    setPatients(newList);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('mj_pacientes_list', JSON.stringify(newList));
+    }
+  };
+
   const [search, setSearch] = useState('');
   const [filterMembershipOnly, setFilterMembershipOnly] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
@@ -98,28 +122,27 @@ export default function PacientesPage() {
 
   const handleSavePatient = (e: React.FormEvent) => {
     e.preventDefault();
+    let updatedList: Patient[];
     if (selectedPatient) {
-      setPatients(
-        patients.map((p) =>
-          p.id === selectedPatient.id
-            ? {
-                ...p,
-                fullName: fullName.toUpperCase(),
-                cedula,
-                email,
-                phone,
-                whatsapp: whatsapp || phone.replace(/\D/g, ''),
-                residence,
-                dob,
-                gender,
-                allergies,
-                notes,
-                hasMembership,
-                creditEnabled,
-                crmStage,
-              }
-            : p
-        )
+      updatedList = patients.map((p) =>
+        p.id === selectedPatient.id
+          ? {
+              ...p,
+              fullName: fullName.toUpperCase(),
+              cedula,
+              email,
+              phone,
+              whatsapp: whatsapp || phone.replace(/\D/g, ''),
+              residence,
+              dob,
+              gender,
+              allergies,
+              notes,
+              hasMembership,
+              creditEnabled,
+              crmStage,
+            }
+          : p
       );
     } else {
       const newP: Patient = {
@@ -140,8 +163,9 @@ export default function PacientesPage() {
         crmStage,
         createdAt: new Date().toISOString(),
       };
-      setPatients([...patients, newP]);
+      updatedList = [...patients, newP];
     }
+    savePatients(updatedList);
     setIsModalOpen(false);
   };
 
@@ -178,7 +202,8 @@ export default function PacientesPage() {
     });
 
     if (newImportedPatients.length > 0) {
-      setPatients((prev) => [...prev, ...newImportedPatients]);
+      const updatedList = [...patients, ...newImportedPatients];
+      savePatients(updatedList);
       setImportSuccessCount(newImportedPatients.length);
       setTimeout(() => {
         setIsImportModalOpen(false);

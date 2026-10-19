@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { initialPatients, buildWhatsAppLink } from '@/lib/data';
 import {
   Receipt,
@@ -103,6 +103,30 @@ const INITIAL_INVOICES: Invoice[] = [
 
 export default function FacturasPage() {
   const [invoices, setInvoices] = useState<Invoice[]>(INITIAL_INVOICES);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('mj_facturas_list');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setInvoices(parsed);
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+  }, []);
+
+  const saveInvoices = (newList: Invoice[]) => {
+    setInvoices(newList);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('mj_facturas_list', JSON.stringify(newList));
+    }
+  };
+
   const [searchDoc, setSearchDoc] = useState('');
   const [filterPaymentStatus, setFilterPaymentStatus] = useState('ALL');
   const [filterHaciendaStatus, setFilterHaciendaStatus] = useState('ALL');
@@ -191,7 +215,7 @@ export default function FacturasPage() {
       serviceName,
     };
 
-    setInvoices([newInv, ...invoices]);
+    saveInvoices([newInv, ...invoices]);
     setIsModalOpen(false);
 
     setEmailNotification(`Factura #${newDocNum} generada y enviada a ${patient.email}`);
@@ -199,7 +223,8 @@ export default function FacturasPage() {
   };
 
   const handleDeleteInvoice = async (id: string) => {
-    setInvoices(invoices.filter((inv) => inv.id !== id));
+    const updated = invoices.filter((inv) => inv.id !== id);
+    saveInvoices(updated);
     try {
       await fetch(`/api/facturas?id=${id}`, { method: 'DELETE' });
     } catch (e) {
@@ -216,17 +241,16 @@ export default function FacturasPage() {
     const newPending = Math.max(0, selectedInvoice.balancePending - abonoAmount);
     const newStatus = newPending === 0 ? 'Pagada' : 'Por Pagar';
 
-    setInvoices(
-      invoices.map((inv) =>
-        inv.id === selectedInvoice.id
-          ? {
-              ...inv,
-              balancePending: newPending,
-              paymentStatus: newStatus,
-            }
-          : inv
-      )
+    const updated = invoices.map((inv) =>
+      inv.id === selectedInvoice.id
+        ? {
+            ...inv,
+            balancePending: newPending,
+            paymentStatus: newStatus,
+          }
+        : inv
     );
+    saveInvoices(updated);
 
     setIsAbonoModalOpen(false);
     setEmailNotification(`Abono de ₡${abonoAmount.toLocaleString()} registrado. Comprobante enviado a ${selectedInvoice.email}`);

@@ -39,12 +39,25 @@ export async function POST(request: Request) {
 
     // BATCH UPDATE/SYNC SUPPORT
     if (body.batch && Array.isArray(body.batch)) {
-      // Delete existing and recreate batch safely
-      await prisma.assistantGoal.deleteMany({});
-
       const createdBatch = await Promise.all(
-        body.batch.map((item: any) =>
-          prisma.assistantGoal.create({
+        body.batch.map(async (item: any) => {
+          if (item.id && !item.id.startsWith('asist-')) {
+            const existing = await prisma.assistantGoal.findUnique({ where: { id: item.id } });
+            if (existing) {
+              return prisma.assistantGoal.update({
+                where: { id: item.id },
+                data: {
+                  name: item.name || existing.name,
+                  role: item.role || existing.role,
+                  monthlyTarget: item.monthlyTarget !== undefined ? Number(item.monthlyTarget) : existing.monthlyTarget,
+                  currentSales: item.currentSales !== undefined ? Number(item.currentSales) : existing.currentSales,
+                  efficiency: item.efficiency !== undefined ? Number(item.efficiency) : existing.efficiency,
+                },
+              });
+            }
+          }
+
+          return prisma.assistantGoal.create({
             data: {
               name: item.name || 'Asistente',
               role: item.role || 'Asistente Clínico',
@@ -52,8 +65,8 @@ export async function POST(request: Request) {
               currentSales: Number(item.currentSales) || 0,
               efficiency: Number(item.efficiency) || 90,
             },
-          })
-        )
+          });
+        })
       );
 
       return NextResponse.json({ success: true, data: createdBatch });
