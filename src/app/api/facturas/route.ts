@@ -5,6 +5,7 @@ const prisma = new PrismaClient();
 
 const defaultInvoices = [
   {
+    id: 'inv-874',
     docNumber: '874',
     docType: 'Factura electrónica',
     patientName: 'CHAVES CORRALES KATHERINE PRISCILA',
@@ -22,6 +23,7 @@ const defaultInvoices = [
     serviceName: 'Limpieza Facial Profunda',
   },
   {
+    id: 'inv-873',
     docNumber: '873',
     docType: 'Factura electrónica',
     patientName: 'PEREZ ZAMORA FRANCISCO',
@@ -38,56 +40,39 @@ const defaultInvoices = [
     paymentMethod: 'Tarjeta Banco Popular',
     serviceName: 'Masaje Descontracturante',
   },
-  {
-    docNumber: '872',
-    docType: 'Factura electrónica',
-    patientName: 'DURAN MARIN ETHEL ADRIANA',
-    cedula: '3-0456-0789',
-    email: 'ethel.duran@correo.com',
-    phone: '+506 8666-3333',
-    date: '14 OCT. 2026',
-    time: '11:00 AM',
-    paymentStatus: 'Por Pagar',
-    haciendaStatus: 'Rechazado',
-    emailSent: true,
-    totalAmount: 86148.94,
-    balancePending: 36148.94,
-    paymentMethod: 'Tarjeta Crédito',
-    serviceName: 'Tratamiento Láser Diodo',
-  },
 ];
 
 export async function GET() {
   try {
-    const dbPayments = await prisma.payment.findMany({
-      orderBy: { createdAt: 'desc' },
+    const payments = await prisma.payment.findMany({
       include: { patient: true },
+      orderBy: { createdAt: 'desc' },
     });
 
-    if (dbPayments.length > 0) {
-      const mapped = dbPayments.map((p, idx) => ({
-        id: p.id,
-        docNumber: (874 - idx).toString(),
-        docType: 'Factura electrónica',
-        patientName: p.patient ? p.patient.fullName : 'CLIENTE GENERAL',
-        cedula: p.patient ? p.patient.cedula : '1-0000-0000',
-        email: p.patient ? p.patient.email : 'cliente@ejemplo.com',
-        phone: p.patient ? p.patient.phone : '+506 8888-8888',
-        date: new Date(p.createdAt).toLocaleDateString('es-CR', { day: '2-digit', month: 'short', year: 'numeric' }),
-        time: new Date(p.createdAt).toLocaleTimeString('es-CR', { hour: '2-digit', minute: '2-digit' }),
-        paymentStatus: 'Pagada',
-        haciendaStatus: 'Aceptado',
-        emailSent: true,
-        totalAmount: p.amount,
-        balancePending: 0.0,
-        paymentMethod: p.paymentMethod || 'SINPE Móvil',
-        serviceName: 'Tratamiento Estético / Servicio',
-      }));
-
-      return NextResponse.json({ success: true, data: mapped });
+    if (payments.length === 0) {
+      return NextResponse.json({ success: true, data: defaultInvoices });
     }
 
-    return NextResponse.json({ success: true, data: defaultInvoices });
+    const formatted = payments.map((p, idx) => ({
+      id: p.id,
+      docNumber: (874 - idx).toString(),
+      docType: 'Factura electrónica',
+      patientName: p.patient?.fullName || 'CLIENTE GENERAL',
+      cedula: p.patient?.cedula || '1-0000-0000',
+      email: p.patient?.email || 'cliente@ejemplo.com',
+      phone: p.patient?.phone || '+506 8888-8888',
+      date: new Date(p.createdAt).toLocaleDateString('es-CR'),
+      time: new Date(p.createdAt).toLocaleTimeString('es-CR', { hour: '2-digit', minute: '2-digit' }),
+      paymentStatus: 'Pagada',
+      haciendaStatus: 'Aceptado',
+      emailSent: true,
+      totalAmount: p.amount,
+      balancePending: 0,
+      paymentMethod: p.paymentMethod || 'SINPE Móvil',
+      serviceName: 'Tratamiento Estético / Servicio',
+    }));
+
+    return NextResponse.json({ success: true, data: formatted });
   } catch (error) {
     return NextResponse.json({ success: true, data: defaultInvoices });
   }
@@ -97,62 +82,56 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
 
-    // Check if patient exists or lookup by cedula
+    // Check patient or create
     let patient = await prisma.patient.findFirst({
       where: {
-        OR: [{ cedula: body.cedula || '' }, { email: body.email || '' }],
+        OR: [{ cedula: body.cedula }, { email: body.email }],
       },
     });
 
-    if (!patient && body.patientName) {
+    if (!patient) {
       patient = await prisma.patient.create({
         data: {
-          fullName: body.patientName,
+          fullName: body.patientName || 'CLIENTE GENERAL',
           cedula: body.cedula || `CED-${Date.now()}`,
-          email: body.email || `cli-${Date.now()}@mj.cr`,
+          email: body.email || `factura-${Date.now()}@mj.cr`,
           phone: body.phone || '+506 8888-8888',
-          consent: true,
-          creditEnabled: Boolean(body.balancePending > 0),
+          creditEnabled: body.balancePending > 0,
         },
       });
     }
 
-    if (patient) {
-      const paymentRecord = await prisma.payment.create({
-        data: {
-          patientId: patient.id,
-          amount: Number(body.totalAmount) || 0,
-          paymentMethod: body.paymentMethod || 'SINPE Móvil',
-          voucher: `FAC-${Date.now()}`,
-        },
-      });
+    const newPayment = await prisma.payment.create({
+      data: {
+        patientId: patient.id,
+        amount: Number(body.totalAmount) || 0,
+        paymentMethod: body.paymentMethod || 'SINPE Móvil',
+        voucher: body.docNumber || `VOC-${Date.now()}`,
+      },
+    });
 
-      return NextResponse.json({
-        success: true,
-        data: {
-          id: paymentRecord.id,
-          docNumber: Math.floor(100 + Math.random() * 900).toString(),
-          docType: body.docType || 'Factura electrónica',
-          patientName: patient.fullName,
-          cedula: patient.cedula,
-          email: patient.email,
-          phone: patient.phone,
-          date: '18 OCT. 2026',
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          paymentStatus: body.balancePending === 0 ? 'Pagada' : 'Por Pagar',
-          haciendaStatus: 'Aceptado',
-          emailSent: true,
-          totalAmount: Number(body.totalAmount),
-          balancePending: Number(body.balancePending),
-          paymentMethod: body.paymentMethod,
-          serviceName: body.serviceName,
-        },
-      }, { status: 201 });
-    }
+    const formattedInvoice = {
+      id: newPayment.id,
+      docNumber: body.docNumber || '875',
+      docType: body.docType || 'Factura electrónica',
+      patientName: patient.fullName,
+      cedula: patient.cedula,
+      email: patient.email,
+      phone: patient.phone,
+      date: new Date().toLocaleDateString('es-CR'),
+      time: new Date().toLocaleTimeString('es-CR', { hour: '2-digit', minute: '2-digit' }),
+      paymentStatus: body.balancePending > 0 ? 'Por Pagar' : 'Pagada',
+      haciendaStatus: 'Aceptado',
+      emailSent: true,
+      totalAmount: Number(body.totalAmount),
+      balancePending: Number(body.balancePending) || 0,
+      paymentMethod: body.paymentMethod || 'SINPE Móvil',
+      serviceName: body.serviceName || 'Servicio Estético',
+    };
 
-    return NextResponse.json({ success: true, data: body });
-  } catch (error) {
-    return NextResponse.json({ success: false, error: 'Error registrando pago en BD' }, { status: 500 });
+    return NextResponse.json({ success: true, data: formattedInvoice }, { status: 201 });
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
 
@@ -161,14 +140,14 @@ export async function DELETE(request: Request) {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
-    if (id && id.length > 20) {
+    if (id && !id.startsWith('inv-')) {
       await prisma.payment.delete({
         where: { id },
-      }).catch(() => null);
+      });
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    return NextResponse.json({ success: false, error: 'Error al eliminar la factura' }, { status: 500 });
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }

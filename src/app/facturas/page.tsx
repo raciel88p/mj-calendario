@@ -103,29 +103,26 @@ const INITIAL_INVOICES: Invoice[] = [
 
 export default function FacturasPage() {
   const [invoices, setInvoices] = useState<Invoice[]>(INITIAL_INVOICES);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('mj_facturas_list');
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setInvoices(parsed);
-          }
-        } catch (e) {
-          console.error(e);
-        }
+  const fetchInvoices = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/facturas');
+      const data = await res.json();
+      if (data.success && data.data && data.data.length > 0) {
+        setInvoices(data.data);
       }
-    }
-  }, []);
-
-  const saveInvoices = (newList: Invoice[]) => {
-    setInvoices(newList);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('mj_facturas_list', JSON.stringify(newList));
+    } catch (e) {
+      console.error('Error fetching invoices:', e);
+    } finally {
+      setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchInvoices();
+  }, []);
 
   const [searchDoc, setSearchDoc] = useState('');
   const [filterPaymentStatus, setFilterPaymentStatus] = useState('ALL');
@@ -172,7 +169,7 @@ export default function FacturasPage() {
   const totalCollected = invoices.reduce((sum, i) => sum + (i.totalAmount - i.balancePending), 0);
   const totalPendingBalance = invoices.reduce((sum, i) => sum + i.balancePending, 0);
 
-  const handleCreateInvoice = (e: React.FormEvent) => {
+  const handleCreateInvoice = async (e: React.FormEvent) => {
     e.preventDefault();
     setCreditErrorMessage(null);
 
@@ -196,35 +193,51 @@ export default function FacturasPage() {
 
     const newDocNum = (Number(invoices[0]?.docNumber || 874) + 1).toString();
 
-    const newInv: Invoice = {
-      id: `inv-${newDocNum}`,
+    const payload = {
       docNumber: newDocNum,
       docType,
       patientName: patient.fullName.toUpperCase(),
       cedula: patient.cedula,
       email: patient.email,
       phone: patient.phone,
-      date: '18 OCT. 2026',
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      paymentStatus: pending === 0 ? 'Pagada' : 'Por Pagar',
-      haciendaStatus: 'Aceptado',
-      emailSent: true,
       totalAmount: Number(totalAmount),
       balancePending: pending,
       paymentMethod,
       serviceName,
     };
 
-    saveInvoices([newInv, ...invoices]);
-    setIsModalOpen(false);
+    try {
+      const res = await fetch('/api/facturas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (data.success && data.data) {
+        setInvoices([data.data, ...invoices]);
+      } else {
+        const newInv: Invoice = {
+          id: `inv-${newDocNum}`,
+          ...payload,
+          date: '18 OCT. 2026',
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          paymentStatus: pending === 0 ? 'Pagada' : 'Por Pagar',
+          haciendaStatus: 'Aceptado',
+          emailSent: true,
+        };
+        setInvoices([newInv, ...invoices]);
+      }
+    } catch (e) {
+      console.error(e);
+    }
 
+    setIsModalOpen(false);
     setEmailNotification(`Factura #${newDocNum} generada y enviada a ${patient.email}`);
     setTimeout(() => setEmailNotification(null), 4000);
   };
 
   const handleDeleteInvoice = async (id: string) => {
-    const updated = invoices.filter((inv) => inv.id !== id);
-    saveInvoices(updated);
+    setInvoices(invoices.filter((inv) => inv.id !== id));
     try {
       await fetch(`/api/facturas?id=${id}`, { method: 'DELETE' });
     } catch (e) {
@@ -241,16 +254,17 @@ export default function FacturasPage() {
     const newPending = Math.max(0, selectedInvoice.balancePending - abonoAmount);
     const newStatus = newPending === 0 ? 'Pagada' : 'Por Pagar';
 
-    const updated = invoices.map((inv) =>
-      inv.id === selectedInvoice.id
-        ? {
-            ...inv,
-            balancePending: newPending,
-            paymentStatus: newStatus,
-          }
-        : inv
+    setInvoices(
+      invoices.map((inv) =>
+        inv.id === selectedInvoice.id
+          ? {
+              ...inv,
+              balancePending: newPending,
+              paymentStatus: newStatus,
+            }
+          : inv
+      )
     );
-    saveInvoices(updated);
 
     setIsAbonoModalOpen(false);
     setEmailNotification(`Abono de ₡${abonoAmount.toLocaleString()} registrado. Comprobante enviado a ${selectedInvoice.email}`);
