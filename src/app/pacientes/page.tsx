@@ -44,10 +44,6 @@ export default function PacientesPage() {
     }
   };
 
-  useEffect(() => {
-    fetchPatients();
-  }, []);
-
   const [search, setSearch] = useState('');
   const [filterMembershipOnly, setFilterMembershipOnly] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
@@ -69,6 +65,37 @@ export default function PacientesPage() {
   const [gender, setGender] = useState('Femenino');
   const [allergies, setAllergies] = useState('');
   const [notes, setNotes] = useState('');
+
+  useEffect(() => {
+    fetchPatients();
+    if (typeof window !== 'undefined') {
+      const savedDraft = localStorage.getItem('mj_draft_patient');
+      if (savedDraft) {
+        try {
+          const draft = JSON.parse(savedDraft);
+          if (draft.fullName) setFullName(draft.fullName);
+          if (draft.cedula) setCedula(draft.cedula);
+          if (draft.email) setEmail(draft.email);
+          if (draft.phone) setPhone(draft.phone);
+          if (draft.residence) setResidence(draft.residence);
+          if (draft.allergies) setAllergies(draft.allergies);
+          if (draft.notes) setNotes(draft.notes);
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+  }, []);
+
+  // Save form draft to localStorage on change
+  useEffect(() => {
+    if (typeof window !== 'undefined' && (fullName || cedula || email || phone)) {
+      localStorage.setItem(
+        'mj_draft_patient',
+        JSON.stringify({ fullName, cedula, email, phone, residence, allergies, notes })
+      );
+    }
+  }, [fullName, cedula, email, phone, residence, allergies, notes]);
   const [hasMembership, setHasMembership] = useState(false);
   const [creditEnabled, setCreditEnabled] = useState(false);
   const [crmStage, setCrmStage] = useState<Patient['crmStage']>('Nuevo Lead');
@@ -101,19 +128,44 @@ export default function PacientesPage() {
 
   const openNewModal = () => {
     setSelectedPatient(null);
-    setFullName('');
-    setCedula('');
-    setEmail('');
-    setPhone('');
-    setWhatsapp('');
-    setResidence('');
-    setDob('');
-    setGender('Femenino');
-    setAllergies('');
-    setNotes('');
-    setHasMembership(false);
-    setCreditEnabled(false);
-    setCrmStage('Nuevo Lead');
+    let draftLoaded = false;
+    if (typeof window !== 'undefined') {
+      const savedDraft = localStorage.getItem('mj_draft_patient');
+      if (savedDraft) {
+        try {
+          const draft = JSON.parse(savedDraft);
+          if (draft.fullName || draft.cedula || draft.email || draft.phone) {
+            setFullName(draft.fullName || '');
+            setCedula(draft.cedula || '');
+            setEmail(draft.email || '');
+            setPhone(draft.phone || '');
+            setWhatsapp(draft.whatsapp || '');
+            setResidence(draft.residence || '');
+            setAllergies(draft.allergies || '');
+            setNotes(draft.notes || '');
+            draftLoaded = true;
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+
+    if (!draftLoaded) {
+      setFullName('');
+      setCedula('');
+      setEmail('');
+      setPhone('');
+      setWhatsapp('');
+      setResidence('');
+      setDob('');
+      setGender('Femenino');
+      setAllergies('');
+      setNotes('');
+      setHasMembership(false);
+      setCreditEnabled(false);
+      setCrmStage('Nuevo Lead');
+    }
     setIsModalOpen(true);
   };
 
@@ -168,6 +220,9 @@ export default function PacientesPage() {
       } catch (err) {
         console.error(err);
       }
+    }
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('mj_draft_patient');
     }
     setIsModalOpen(false);
   };

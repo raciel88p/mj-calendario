@@ -25,20 +25,29 @@ export async function POST(request: Request) {
     if (body.batch && Array.isArray(body.batch)) {
       const createdBatch = await Promise.all(
         body.batch.map(async (item: any) => {
+          let existing = null;
+
           if (item.id && !item.id.startsWith('asist-')) {
-            const existing = await prisma.assistantGoal.findUnique({ where: { id: item.id } });
-            if (existing) {
-              return prisma.assistantGoal.update({
-                where: { id: item.id },
-                data: {
-                  name: item.name || existing.name,
-                  role: item.role || existing.role,
-                  monthlyTarget: item.monthlyTarget !== undefined ? Number(item.monthlyTarget) : existing.monthlyTarget,
-                  currentSales: item.currentSales !== undefined ? Number(item.currentSales) : existing.currentSales,
-                  efficiency: item.efficiency !== undefined ? Number(item.efficiency) : existing.efficiency,
-                },
-              });
-            }
+            existing = await prisma.assistantGoal.findUnique({ where: { id: item.id } });
+          }
+
+          if (!existing && item.name) {
+            existing = await prisma.assistantGoal.findFirst({
+              where: { name: { equals: item.name, mode: 'insensitive' } },
+            });
+          }
+
+          if (existing) {
+            return prisma.assistantGoal.update({
+              where: { id: existing.id },
+              data: {
+                name: item.name || existing.name,
+                role: item.role || existing.role,
+                monthlyTarget: item.monthlyTarget !== undefined ? Number(item.monthlyTarget) : existing.monthlyTarget,
+                currentSales: item.currentSales !== undefined ? Number(item.currentSales) : existing.currentSales,
+                efficiency: item.efficiency !== undefined ? Number(item.efficiency) : existing.efficiency,
+              },
+            });
           }
 
           return prisma.assistantGoal.create({

@@ -77,10 +77,6 @@ export default function CRMPage() {
     }
   };
 
-  useEffect(() => {
-    fetchDeals();
-  }, []);
-
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [dealTitle, setDealTitle] = useState('');
@@ -93,6 +89,34 @@ export default function CRMPage() {
   const [owner, setOwner] = useState('Dra. María José');
   const [channel, setChannel] = useState<DealItem['channel']>('Formulario Web');
   const [hasMembership, setHasMembership] = useState(false);
+
+  useEffect(() => {
+    fetchDeals();
+    if (typeof window !== 'undefined') {
+      const savedDraft = localStorage.getItem('mj_draft_crm');
+      if (savedDraft) {
+        try {
+          const draft = JSON.parse(savedDraft);
+          if (draft.dealTitle) setDealTitle(draft.dealTitle);
+          if (draft.patientName) setPatientName(draft.patientName);
+          if (draft.cedula) setCedula(draft.cedula);
+          if (draft.email) setEmail(draft.email);
+          if (draft.phone) setPhone(draft.phone);
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && (dealTitle || patientName || cedula)) {
+      localStorage.setItem(
+        'mj_draft_crm',
+        JSON.stringify({ dealTitle, patientName, cedula, email, phone })
+      );
+    }
+  }, [dealTitle, patientName, cedula, email, phone]);
 
   const filteredDeals = deals.filter((d) => {
     const matchesSearch =
@@ -156,6 +180,9 @@ export default function CRMPage() {
       console.error(e);
     }
 
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('mj_draft_crm');
+    }
     setIsModalOpen(false);
     setDealTitle('');
     setPatientName('');
@@ -239,7 +266,24 @@ export default function CRMPage() {
         {/* Top Right Actions */}
         <div className="flex items-center gap-3">
           <button
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => {
+              if (typeof window !== 'undefined') {
+                const savedDraft = localStorage.getItem('mj_draft_crm');
+                if (savedDraft) {
+                  try {
+                    const draft = JSON.parse(savedDraft);
+                    if (draft.dealTitle) setDealTitle(draft.dealTitle);
+                    if (draft.patientName) setPatientName(draft.patientName);
+                    if (draft.cedula) setCedula(draft.cedula);
+                    if (draft.email) setEmail(draft.email);
+                    if (draft.phone) setPhone(draft.phone);
+                  } catch (e) {
+                    console.error(e);
+                  }
+                }
+              }
+              setIsModalOpen(true);
+            }}
             className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold shadow-2xs transition flex items-center gap-2"
           >
             Agregar negocios <ChevronDown className="w-3.5 h-3.5" />

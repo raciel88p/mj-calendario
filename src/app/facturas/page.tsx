@@ -65,10 +65,6 @@ export default function FacturasPage() {
     }
   };
 
-  useEffect(() => {
-    fetchInvoices();
-  }, []);
-
   const [searchDoc, setSearchDoc] = useState('');
   const [filterPaymentStatus, setFilterPaymentStatus] = useState('ALL');
   const [filterHaciendaStatus, setFilterHaciendaStatus] = useState('ALL');
@@ -80,6 +76,37 @@ export default function FacturasPage() {
 
   // Patients list state for invoice creation dropdown
   const [patients, setPatients] = useState<any[]>([]);
+
+  // New Invoice Form
+  const [selectedPatientId, setSelectedPatientId] = useState('');
+  const [serviceName, setServiceName] = useState('Tratamiento Estético / Facial');
+  const [docType, setDocType] = useState<Invoice['docType']>('Factura electrónica');
+  const [totalAmount, setTotalAmount] = useState(50000);
+  const [abonoInitial, setAbonoInitial] = useState(20000);
+  const [paymentMethod, setPaymentMethod] = useState<Invoice['paymentMethod']>('SINPE Móvil');
+
+  useEffect(() => {
+    fetchInvoices();
+    if (typeof window !== 'undefined') {
+      const savedDraft = localStorage.getItem('mj_draft_factura');
+      if (savedDraft) {
+        try {
+          const draft = JSON.parse(savedDraft);
+          if (draft.serviceName) setServiceName(draft.serviceName);
+          if (draft.totalAmount) setTotalAmount(draft.totalAmount);
+          if (draft.abonoInitial) setAbonoInitial(draft.abonoInitial);
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && serviceName) {
+      localStorage.setItem('mj_draft_factura', JSON.stringify({ serviceName, totalAmount, abonoInitial }));
+    }
+  }, [serviceName, totalAmount, abonoInitial]);
 
   useEffect(() => {
     async function loadPatients() {
@@ -98,14 +125,6 @@ export default function FacturasPage() {
     }
     loadPatients();
   }, []);
-
-  // New Invoice Form
-  const [selectedPatientId, setSelectedPatientId] = useState('');
-  const [serviceName, setServiceName] = useState('Tratamiento Estético / Facial');
-  const [docType, setDocType] = useState<Invoice['docType']>('Factura electrónica');
-  const [totalAmount, setTotalAmount] = useState(50000);
-  const [abonoInitial, setAbonoInitial] = useState(20000);
-  const [paymentMethod, setPaymentMethod] = useState<Invoice['paymentMethod']>('SINPE Móvil');
 
   // Abono Register
   const [abonoAmount, setAbonoAmount] = useState(10000);
@@ -197,6 +216,9 @@ export default function FacturasPage() {
       console.error(e);
     }
 
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('mj_draft_factura');
+    }
     setIsModalOpen(false);
     setEmailNotification(`Factura #${newDocNum} generada y enviada a ${patient.email}`);
     setTimeout(() => setEmailNotification(null), 4000);
@@ -254,6 +276,19 @@ export default function FacturasPage() {
         <button
           onClick={() => {
             setCreditErrorMessage(null);
+            if (typeof window !== 'undefined') {
+              const savedDraft = localStorage.getItem('mj_draft_factura');
+              if (savedDraft) {
+                try {
+                  const draft = JSON.parse(savedDraft);
+                  if (draft.serviceName) setServiceName(draft.serviceName);
+                  if (draft.totalAmount) setTotalAmount(draft.totalAmount);
+                  if (draft.abonoInitial) setAbonoInitial(draft.abonoInitial);
+                } catch (e) {
+                  console.error(e);
+                }
+              }
+            }
             setIsModalOpen(true);
           }}
           className="px-4 py-2.5 bg-gradient-to-r from-pink-500 to-rose-500 text-white font-medium text-sm rounded-xl shadow-xs hover:opacity-90 transition flex items-center gap-2"

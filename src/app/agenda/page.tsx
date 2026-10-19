@@ -55,6 +55,20 @@ export default function AgendaPage() {
   const [appointments, setAppointments] = useState<Appointment[]>(DEFAULT_APPOINTMENTS);
   const [loading, setLoading] = useState(true);
 
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Form states
+  const [patientName, setPatientName] = useState('');
+  const [patientPhone, setPatientPhone] = useState('');
+  const [treatmentId, setTreatmentId] = useState(initialTreatments[0].id);
+  const [slotTime, setSlotTime] = useState('09:00');
+  const [duration, setDuration] = useState(60);
+  const [price, setPrice] = useState(35000);
+  const [deposit, setDeposit] = useState(0);
+  const [status, setStatus] = useState<'Pendiente' | 'Confirmada' | 'Completada' | 'Cancelada'>('Pendiente');
+  const [notes, setNotes] = useState('');
+
   const fetchAppointments = async () => {
     setLoading(true);
     try {
@@ -72,21 +86,26 @@ export default function AgendaPage() {
 
   useEffect(() => {
     fetchAppointments();
+    if (typeof window !== 'undefined') {
+      const savedDraft = localStorage.getItem('mj_draft_appointment');
+      if (savedDraft) {
+        try {
+          const draft = JSON.parse(savedDraft);
+          if (draft.patientName) setPatientName(draft.patientName);
+          if (draft.patientPhone) setPatientPhone(draft.patientPhone);
+          if (draft.notes) setNotes(draft.notes);
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
   }, []);
 
-  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  // Form states
-  const [patientName, setPatientName] = useState('');
-  const [patientPhone, setPatientPhone] = useState('');
-  const [treatmentId, setTreatmentId] = useState(initialTreatments[0].id);
-  const [slotTime, setSlotTime] = useState('09:00');
-  const [duration, setDuration] = useState(60);
-  const [price, setPrice] = useState(35000);
-  const [deposit, setDeposit] = useState(0);
-  const [status, setStatus] = useState<'Pendiente' | 'Confirmada' | 'Completada' | 'Cancelada'>('Pendiente');
-  const [notes, setNotes] = useState('');
+  useEffect(() => {
+    if (typeof window !== 'undefined' && (patientName || patientPhone || notes)) {
+      localStorage.setItem('mj_draft_appointment', JSON.stringify({ patientName, patientPhone, notes }));
+    }
+  }, [patientName, patientPhone, notes]);
 
   const openSlotModal = (hourText: string) => {
     let h = parseInt(hourText);
@@ -94,15 +113,36 @@ export default function AgendaPage() {
     const formattedHour = h < 10 ? `0${h}:00` : `${h}:00`;
 
     setSelectedAppointment(null);
-    setPatientName('');
-    setPatientPhone('');
+    let draftLoaded = false;
+    if (typeof window !== 'undefined') {
+      const savedDraft = localStorage.getItem('mj_draft_appointment');
+      if (savedDraft) {
+        try {
+          const draft = JSON.parse(savedDraft);
+          if (draft.patientName || draft.patientPhone || draft.notes) {
+            setPatientName(draft.patientName || '');
+            setPatientPhone(draft.patientPhone || '');
+            setNotes(draft.notes || '');
+            draftLoaded = true;
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+
+    if (!draftLoaded) {
+      setPatientName('');
+      setPatientPhone('');
+      setNotes('');
+    }
+
     setTreatmentId(initialTreatments[0].id);
     setSlotTime(formattedHour);
     setDuration(initialTreatments[0].durationMins);
     setPrice(initialTreatments[0].price);
     setDeposit(0);
     setStatus('Pendiente');
-    setNotes('');
     setIsModalOpen(true);
   };
 
@@ -191,6 +231,9 @@ export default function AgendaPage() {
       } catch (err) {
         console.error(err);
       }
+    }
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('mj_draft_appointment');
     }
     setIsModalOpen(false);
   };
