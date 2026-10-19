@@ -3,47 +3,7 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-const defaultDeals = [
-  {
-    title: 'Paquete Facial Hidratante + Colágeno',
-    patientName: 'MARÍA GONZÁLEZ PÉREZ',
-    cedula: '1-1111-0111',
-    email: 'maria.gonzalez@example.com',
-    phone: '+506 8888-1111',
-    whatsapp: '50688881111',
-    value: 45000,
-    stage: 'Cliente Fidelizado',
-    owner: 'Dra. María José',
-    channel: 'WhatsApp',
-    hasMembership: true,
-  },
-  {
-    title: 'Tratamiento Masaje Descontracturante',
-    patientName: 'CARLA RODRÍGUEZ MONGE',
-    cedula: '1-2222-0222',
-    email: 'carla.rodriguez@example.com',
-    phone: '+506 8888-2222',
-    whatsapp: '50688882222',
-    value: 35000,
-    stage: 'Cita Agendada',
-    owner: 'Recepción Estética',
-    channel: 'Instagram',
-    hasMembership: false,
-  },
-  {
-    title: 'Sesión Depilación Láser Diodo',
-    patientName: 'FERNANDA LÓPEZ SÁNCHEZ',
-    cedula: '1-3333-0333',
-    email: 'fernanda.lopez@example.com',
-    phone: '+506 8888-3333',
-    whatsapp: '50688883333',
-    value: 50000,
-    stage: 'Nuevo Lead',
-    owner: 'Dra. María José',
-    channel: 'Formulario Web',
-    hasMembership: true,
-  },
-];
+const defaultDeals: any[] = [];
 
 export async function GET() {
   try {

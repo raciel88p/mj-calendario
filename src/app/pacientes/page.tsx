@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 
 export default function PacientesPage() {
-  const [patients, setPatients] = useState<Patient[]>(initialPatients);
+  const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchPatients = async () => {
@@ -34,7 +34,7 @@ export default function PacientesPage() {
     try {
       const res = await fetch('/api/patients');
       const data = await res.json();
-      if (data.success && data.data && data.data.length > 0) {
+      if (data.success && data.data) {
         setPatients(data.data);
       }
     } catch (err) {

@@ -44,65 +44,10 @@ interface Invoice {
   serviceName: string;
 }
 
-const INITIAL_INVOICES: Invoice[] = [
-  {
-    id: 'inv-874',
-    docNumber: '874',
-    docType: 'Factura electrónica',
-    patientName: 'CHAVES CORRALES KATHERINE PRISCILA',
-    cedula: '1-1234-0567',
-    email: 'katherine.chaves@correo.com',
-    phone: '+506 8888-1111',
-    date: '17 OCT. 2026',
-    time: '10:30 AM',
-    paymentStatus: 'Pagada',
-    haciendaStatus: 'Aceptado',
-    emailSent: true,
-    totalAmount: 37799.63,
-    balancePending: 0.0,
-    paymentMethod: 'SINPE Móvil',
-    serviceName: 'Limpieza Facial Profunda',
-  },
-  {
-    id: 'inv-873',
-    docNumber: '873',
-    docType: 'Factura electrónica',
-    patientName: 'PEREZ ZAMORA FRANCISCO',
-    cedula: '1-0987-0654',
-    email: 'francisco.perez@correo.com',
-    phone: '+506 8777-2222',
-    date: '15 OCT. 2026',
-    time: '02:15 PM',
-    paymentStatus: 'Por Pagar',
-    haciendaStatus: 'Aceptado',
-    emailSent: true,
-    totalAmount: 56500.0,
-    balancePending: 31500.0,
-    paymentMethod: 'Tarjeta Banco Popular',
-    serviceName: 'Masaje Descontracturante',
-  },
-  {
-    id: 'inv-872',
-    docNumber: '872',
-    docType: 'Factura electrónica',
-    patientName: 'DURAN MARIN ETHEL ADRIANA',
-    cedula: '3-0456-0789',
-    email: 'ethel.duran@correo.com',
-    phone: '+506 8666-3333',
-    date: '14 OCT. 2026',
-    time: '11:00 AM',
-    paymentStatus: 'Por Pagar',
-    haciendaStatus: 'Rechazado',
-    emailSent: true,
-    totalAmount: 86148.94,
-    balancePending: 36148.94,
-    paymentMethod: 'Tarjeta Crédito',
-    serviceName: 'Tratamiento Láser Diodo',
-  },
-];
+const INITIAL_INVOICES: Invoice[] = [];
 
 export default function FacturasPage() {
-  const [invoices, setInvoices] = useState<Invoice[]>(INITIAL_INVOICES);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchInvoices = async () => {
@@ -110,7 +55,7 @@ export default function FacturasPage() {
     try {
       const res = await fetch('/api/facturas');
       const data = await res.json();
-      if (data.success && data.data && data.data.length > 0) {
+      if (data.success && data.data) {
         setInvoices(data.data);
       }
     } catch (e) {
@@ -133,8 +78,29 @@ export default function FacturasPage() {
   const [isAbonoModalOpen, setIsAbonoModalOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
 
+  // Patients list state for invoice creation dropdown
+  const [patients, setPatients] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function loadPatients() {
+      try {
+        const res = await fetch('/api/patients');
+        const data = await res.json();
+        if (data.success && data.data) {
+          setPatients(data.data);
+          if (data.data.length > 0) {
+            setSelectedPatientId(data.data[0].id);
+          }
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    loadPatients();
+  }, []);
+
   // New Invoice Form
-  const [selectedPatientId, setSelectedPatientId] = useState(initialPatients[0]?.id || '');
+  const [selectedPatientId, setSelectedPatientId] = useState('');
   const [serviceName, setServiceName] = useState('Tratamiento Estético / Facial');
   const [docType, setDocType] = useState<Invoice['docType']>('Factura electrónica');
   const [totalAmount, setTotalAmount] = useState(50000);
@@ -570,11 +536,15 @@ export default function FacturasPage() {
                   }}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs font-bold focus:outline-none focus:border-pink-500 uppercase"
                 >
-                  {initialPatients.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.fullName} - Céd: {p.cedula} {p.creditEnabled ? '(Crédito Habilitado)' : '(Sin Crédito)'}
-                    </option>
-                  ))}
+                  {patients.length === 0 ? (
+                    <option value="">-- Sin pacientes registrados --</option>
+                  ) : (
+                    patients.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.fullName} - Céd: {p.cedula} {p.creditEnabled ? '(Crédito Habilitado)' : '(Sin Crédito)'}
+                      </option>
+                    ))
+                  )}
                 </select>
               </div>
 

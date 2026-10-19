@@ -3,44 +3,7 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-const defaultInvoices = [
-  {
-    id: 'inv-874',
-    docNumber: '874',
-    docType: 'Factura electrónica',
-    patientName: 'CHAVES CORRALES KATHERINE PRISCILA',
-    cedula: '1-1234-0567',
-    email: 'katherine.chaves@correo.com',
-    phone: '+506 8888-1111',
-    date: '17 OCT. 2026',
-    time: '10:30 AM',
-    paymentStatus: 'Pagada',
-    haciendaStatus: 'Aceptado',
-    emailSent: true,
-    totalAmount: 37799.63,
-    balancePending: 0.0,
-    paymentMethod: 'SINPE Móvil',
-    serviceName: 'Limpieza Facial Profunda',
-  },
-  {
-    id: 'inv-873',
-    docNumber: '873',
-    docType: 'Factura electrónica',
-    patientName: 'PEREZ ZAMORA FRANCISCO',
-    cedula: '1-0987-0654',
-    email: 'francisco.perez@correo.com',
-    phone: '+506 8777-2222',
-    date: '15 OCT. 2026',
-    time: '02:15 PM',
-    paymentStatus: 'Por Pagar',
-    haciendaStatus: 'Aceptado',
-    emailSent: true,
-    totalAmount: 56500.0,
-    balancePending: 31500.0,
-    paymentMethod: 'Tarjeta Banco Popular',
-    serviceName: 'Masaje Descontracturante',
-  },
-];
+const defaultInvoices: any[] = [];
 
 export async function GET() {
   try {
@@ -50,7 +13,7 @@ export async function GET() {
     });
 
     if (payments.length === 0) {
-      return NextResponse.json({ success: true, data: defaultInvoices });
+      return NextResponse.json({ success: true, data: [] });
     }
 
     const formatted = payments.map((p, idx) => ({

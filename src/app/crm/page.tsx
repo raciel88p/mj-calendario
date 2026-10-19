@@ -56,71 +56,10 @@ export default function CRMPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedOwnerFilter, setSelectedOwnerFilter] = useState('Todos');
 
-  const DEFAULT_DEALS: DealItem[] = [
-    {
-      id: 'deal-1',
-      title: 'Paquete Facial Hidratante + Colágeno',
-      patientName: 'MARÍA GONZÁLEZ PÉREZ',
-      cedula: '1-1111-0111',
-      email: 'maria.gonzalez@example.com',
-      phone: '+506 8888-1111',
-      whatsapp: '50688881111',
-      value: 45000,
-      stage: 'Cliente Fidelizado',
-      owner: 'Dra. María José',
-      closeDate: '2026-11-15',
-      channel: 'WhatsApp',
-      hasMembership: true,
-    },
-    {
-      id: 'deal-2',
-      title: 'Tratamiento Masaje Descontracturante',
-      patientName: 'CARLA RODRÍGUEZ MONGE',
-      cedula: '1-2222-0222',
-      email: 'carla.rodriguez@example.com',
-      phone: '+506 8888-2222',
-      whatsapp: '50688882222',
-      value: 35000,
-      stage: 'Cita Agendada',
-      owner: 'Recepción Estética',
-      closeDate: '2026-11-10',
-      channel: 'Instagram',
-      hasMembership: false,
-    },
-    {
-      id: 'deal-3',
-      title: 'Sesión Depilación Láser Diodo',
-      patientName: 'FERNANDA LÓPEZ SÁNCHEZ',
-      cedula: '1-3333-0333',
-      email: 'fernanda.lopez@example.com',
-      phone: '+506 8888-3333',
-      whatsapp: '50688883333',
-      value: 50000,
-      stage: 'Nuevo Lead',
-      owner: 'Dra. María José',
-      closeDate: '2026-11-20',
-      channel: 'Formulario Web',
-      hasMembership: true,
-    },
-    {
-      id: 'deal-4',
-      title: 'Consulta Paquete Reductivo Corporal',
-      patientName: 'STEFANIE CHAVARRÍA SOLANO',
-      cedula: '1-4444-0444',
-      email: 'stefanie.chavarria@example.com',
-      phone: '+506 8888-4444',
-      whatsapp: '50688884444',
-      value: 40000,
-      stage: 'Contactado',
-      owner: 'Recepción Estética',
-      closeDate: '2026-11-12',
-      channel: 'Messenger',
-      hasMembership: false,
-    },
-  ];
+  const DEFAULT_DEALS: DealItem[] = [];
 
   // Deals State with database sync
-  const [deals, setDeals] = useState<DealItem[]>(DEFAULT_DEALS);
+  const [deals, setDeals] = useState<DealItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchDeals = async () => {
