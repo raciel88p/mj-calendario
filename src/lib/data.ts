@@ -55,77 +55,11 @@ export const initialTreatments: Treatment[] = [
 
 export const initialPatients: Patient[] = [];
 
-export const initialCRMInteractions: CRMInteraction[] = [
-  {
-    id: 'crm-1',
-    patientId: 'p1',
-    patientName: 'MARÍA GONZÁLEZ PÉREZ',
-    type: 'WhatsApp',
-    note: 'Enviada confirmación de cita para Facial Hidratante. Membresía MJ verificada.',
-    date: '2026-11-05',
-  },
-  {
-    id: 'crm-2',
-    patientId: 'p3',
-    patientName: 'FERNANDA LÓPEZ SÁNCHEZ',
-    type: 'Formulario Web',
-    note: 'Lead recibido desde el Formulario Web de la clínica solicitando cita de Depilación Láser.',
-    date: '2026-11-04',
-  },
-  {
-    id: 'crm-3',
-    patientId: 'p4',
-    patientName: 'STEFANIE CHAVARRÍA SOLANO',
-    type: 'Messenger',
-    note: 'Consulta por Facebook Messenger sobre costos de paquetes reductivos.',
-    date: '2026-11-03',
-  },
-];
+export const initialCRMInteractions: CRMInteraction[] = [];
 
-export const initialAppointments: Appointment[] = [
-  {
-    id: 'a1',
-    patientId: 'p1',
-    patientName: 'MARÍA GONZÁLEZ PÉREZ',
-    patientPhone: '+506 8888-1111',
-    treatmentId: 't1',
-    treatmentName: 'Facial Hidratante Profundo',
-    treatmentColor: '#3B82F6',
-    dateTime: new Date(new Date().setHours(10, 0, 0, 0)).toISOString(),
-    durationMins: 60,
-    price: 45000,
-    deposit: 15000,
-    status: 'Confirmada',
-    notes: 'Primera cita del mes - Membresía MJ',
-  },
-  {
-    id: 'a2',
-    patientId: 'p2',
-    patientName: 'CARLA RODRÍGUEZ MONGE',
-    patientPhone: '+506 8888-2222',
-    treatmentId: 't2',
-    treatmentName: 'Masaje Relajante Descontracturante',
-    treatmentColor: '#10B981',
-    dateTime: new Date(new Date().setHours(15, 0, 0, 0)).toISOString(),
-    durationMins: 60,
-    price: 35000,
-    deposit: 0,
-    status: 'Pendiente',
-    notes: 'Enviar recordatorio por WhatsApp',
-  },
-];
+export const initialAppointments: Appointment[] = [];
 
-export const initialPayments: Payment[] = [
-  {
-    id: 'pay1',
-    patientId: 'p1',
-    appointmentId: 'a1',
-    amount: 15000,
-    paymentMethod: 'SINPE',
-    voucher: 'SINPE-99281',
-    createdAt: new Date().toISOString(),
-  },
-];
+export const initialPayments: Payment[] = [];
 
 export function buildWhatsAppLink(phone: string, text: string) {
   const cleanPhone = phone.replace(/\D/g, '');

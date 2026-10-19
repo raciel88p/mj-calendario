@@ -13,14 +13,7 @@ interface AssistantTarget {
   efficiency: number;
 }
 
-const DEFAULT_ASSISTANTS: AssistantTarget[] = [
-  { id: 'asist-1', name: 'Sofía Monge', role: 'Asistente Principal', monthlyTarget: 1500000, currentSales: 1250000, efficiency: 94 },
-  { id: 'asist-2', name: 'Valeria Rojas', role: 'Asistente Cabina 1', monthlyTarget: 1200000, currentSales: 980000, efficiency: 88 },
-  { id: 'asist-3', name: 'Daniela Castro', role: 'Asistente Cabina 2', monthlyTarget: 1200000, currentSales: 1100000, efficiency: 92 },
-  { id: 'asist-4', name: 'Camila Mora', role: 'Especialista Facial', monthlyTarget: 1800000, currentSales: 1650000, efficiency: 96 },
-  { id: 'asist-5', name: 'Mariana Solís', role: 'Especialista Corporal', monthlyTarget: 1600000, currentSales: 1400000, efficiency: 90 },
-  { id: 'asist-6', name: 'Lucía Vargas', role: 'Recepcionista & Ventas', monthlyTarget: 2000000, currentSales: 1850000, efficiency: 95 },
-];
+const DEFAULT_ASSISTANTS: AssistantTarget[] = [];
 
 export default function ReportesPage() {
   const [appointments] = useState(initialAppointments);
@@ -51,7 +44,7 @@ export default function ReportesPage() {
     try {
       const res = await fetch('/api/assistants');
       const data = await res.json();
-      if (data.success && data.data && data.data.length > 0) {
+      if (data.success && Array.isArray(data.data)) {
         setAssistants(data.data);
       } else {
         loadFromLocalStorage();

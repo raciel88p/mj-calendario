@@ -35,65 +35,7 @@ const HOURS = [
   '7pm',
 ];
 
-const DEFAULT_APPOINTMENTS: Appointment[] = [
-  {
-    id: 'apt-1',
-    patientId: 'p1',
-    patientName: 'CHAVARRIA LOPEZ MARJORIE FERNANDA',
-    patientPhone: '+506 8888-1111',
-    treatmentId: 't2',
-    treatmentName: 'Masaje Relajante Descontracturante',
-    treatmentColor: '#10B981', // Verde
-    dateTime: '2026-11-06T09:00:00',
-    durationMins: 60,
-    price: 35000,
-    deposit: 10000,
-    status: 'Confirmada',
-    notes: 'Solo 2 cabinas',
-  },
-  {
-    id: 'apt-2',
-    patientId: 'p2',
-    patientName: 'VELASQUEZ LORIA JIRLEN MILENA',
-    patientPhone: '+506 8888-2222',
-    treatmentId: 't4',
-    treatmentName: 'Depilación con Cera Sensible',
-    treatmentColor: '#EC4899', // Rosado
-    dateTime: '2026-11-06T09:00:00',
-    durationMins: 60,
-    price: 25000,
-    deposit: 5000,
-    status: 'Confirmada',
-  },
-  {
-    id: 'apt-3',
-    patientId: 'p3',
-    patientName: 'BEDOYA GONZALEZ KAREN MARIA',
-    patientPhone: '+506 8888-3333',
-    treatmentId: 't4',
-    treatmentName: 'Depilación Láser Diodo',
-    treatmentColor: '#8B5CF6', // Morado
-    dateTime: '2026-11-06T11:00:00',
-    durationMins: 60,
-    price: 45000,
-    deposit: 15000,
-    status: 'Pendiente',
-  },
-  {
-    id: 'apt-4',
-    patientId: 'p4',
-    patientName: 'CEDEÑO CASTRO CAROLL MARIA',
-    patientPhone: '+506 8888-4444',
-    treatmentId: 't2',
-    treatmentName: 'Masaje Reductivo Corporal',
-    treatmentColor: '#10B981', // Verde
-    dateTime: '2026-11-06T13:00:00',
-    durationMins: 60,
-    price: 38000,
-    deposit: 0,
-    status: 'Confirmada',
-  },
-];
+const DEFAULT_APPOINTMENTS: Appointment[] = [];
 
 export default function AgendaPage() {
   const [activeTab, setActiveTab] = useState<'Agenda' | 'Citas' | 'SalaDeEspera'>('Agenda');
@@ -118,7 +60,7 @@ export default function AgendaPage() {
     try {
       const res = await fetch('/api/appointments');
       const data = await res.json();
-      if (data.success && data.data && data.data.length > 0) {
+      if (data.success && Array.isArray(data.data)) {
         setAppointments(data.data);
       }
     } catch (e) {

@@ -139,7 +139,7 @@ export default function FacturasPage() {
     e.preventDefault();
     setCreditErrorMessage(null);
 
-    const patient = initialPatients.find((p) => p.id === selectedPatientId) || {
+    const patient = patients.find((p) => p.id === selectedPatientId) || {
       fullName: 'CLIENTE GENERAL',
       cedula: '1-0000-0000',
       email: 'cliente@ejemplo.com',

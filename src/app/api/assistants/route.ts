@@ -3,33 +3,17 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-const defaultAssistants = [
-  { name: 'Sofía Monge', role: 'Asistente Principal', monthlyTarget: 1500000, currentSales: 1250000, efficiency: 94 },
-  { name: 'Valeria Rojas', role: 'Asistente Cabina 1', monthlyTarget: 1200000, currentSales: 980000, efficiency: 88 },
-  { name: 'Daniela Castro', role: 'Asistente Cabina 2', monthlyTarget: 1200000, currentSales: 1100000, efficiency: 92 },
-  { name: 'Camila Mora', role: 'Especialista Facial', monthlyTarget: 1800000, currentSales: 1650000, efficiency: 96 },
-  { name: 'Mariana Solís', role: 'Especialista Corporal', monthlyTarget: 1600000, currentSales: 1400000, efficiency: 90 },
-  { name: 'Lucía Vargas', role: 'Recepcionista & Ventas', monthlyTarget: 2000000, currentSales: 1850000, efficiency: 95 },
-];
+const defaultAssistants: any[] = [];
 
 export async function GET() {
   try {
-    let assistants = await prisma.assistantGoal.findMany({
+    const assistants = await prisma.assistantGoal.findMany({
       orderBy: { createdAt: 'asc' },
     });
 
-    if (assistants.length === 0) {
-      await prisma.assistantGoal.createMany({
-        data: defaultAssistants,
-      });
-      assistants = await prisma.assistantGoal.findMany({
-        orderBy: { createdAt: 'asc' },
-      });
-    }
-
     return NextResponse.json({ success: true, data: assistants });
   } catch (error) {
-    return NextResponse.json({ success: true, data: defaultAssistants });
+    return NextResponse.json({ success: true, data: [] });
   }
 }
 
