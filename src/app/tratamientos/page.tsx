@@ -5,8 +5,11 @@ import { initialTreatments } from '@/lib/data';
 import { Treatment } from '@/types';
 import { Sparkles, Plus, Edit, CheckCircle2, Clock, DollarSign } from 'lucide-react';
 
+import { useEffect } from 'react';
+
 export default function TratamientosPage() {
   const [treatments, setTreatments] = useState<Treatment[]>(initialTreatments);
+  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedT, setSelectedT] = useState<Treatment | null>(null);
 
@@ -17,6 +20,25 @@ export default function TratamientosPage() {
   const [price, setPrice] = useState(35000);
   const [color, setColor] = useState('#3B82F6');
   const [description, setDescription] = useState('');
+
+  const fetchTreatments = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/treatments', { cache: 'no-store' });
+      const data = await res.json();
+      if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+        setTreatments(data.data);
+      }
+    } catch (e) {
+      console.error('Error fetching treatments:', e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTreatments();
+  }, []);
 
   const openNewModal = () => {
     setSelectedT(null);
@@ -29,28 +51,53 @@ export default function TratamientosPage() {
     setIsModalOpen(true);
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    const payload = {
+      name,
+      category,
+      durationMins: Number(durationMins),
+      price: Number(price),
+      color,
+      description,
+    };
+
     if (selectedT) {
       setTreatments(
         treatments.map((t) =>
-          t.id === selectedT.id
-            ? { ...t, name, category, durationMins: Number(durationMins), price: Number(price), color, description }
-            : t
+          t.id === selectedT.id ? { ...t, ...payload } : t
         )
       );
+      try {
+        await fetch('/api/treatments', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: selectedT.id, ...payload }),
+        });
+      } catch (err) {
+        console.error(err);
+      }
     } else {
-      const newT: Treatment = {
-        id: `t-${Date.now()}`,
-        name,
-        category,
-        durationMins: Number(durationMins),
-        price: Number(price),
-        color,
-        description,
-        active: true,
-      };
-      setTreatments([...treatments, newT]);
+      try {
+        const res = await fetch('/api/treatments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (data.success && data.data) {
+          setTreatments([...treatments, data.data]);
+        } else {
+          const newT: Treatment = {
+            id: `t-${Date.now()}`,
+            ...payload,
+            active: true,
+          };
+          setTreatments([...treatments, newT]);
+        }
+      } catch (err) {
+        console.error(err);
+      }
     }
     setIsModalOpen(false);
   };

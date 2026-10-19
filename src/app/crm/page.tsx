@@ -65,7 +65,7 @@ export default function CRMPage() {
   const fetchDeals = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/crm');
+      const res = await fetch('/api/crm', { cache: 'no-store' });
       const data = await res.json();
       if (data.success && data.data && data.data.length > 0) {
         setDeals(data.data);

@@ -16,7 +16,22 @@ interface AssistantTarget {
 const DEFAULT_ASSISTANTS: AssistantTarget[] = [];
 
 export default function ReportesPage() {
-  const [appointments] = useState(initialAppointments);
+  const [appointments, setAppointments] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function loadAppointments() {
+      try {
+        const res = await fetch('/api/appointments', { cache: 'no-store' });
+        const data = await res.json();
+        if (data.success && Array.isArray(data.data)) {
+          setAppointments(data.data);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    loadAppointments();
+  }, []);
 
   // Global Clinic Sales Target State
   const [globalSalesTarget, setGlobalSalesTarget] = useState(10000000);
@@ -42,7 +57,7 @@ export default function ReportesPage() {
   const fetchAssistants = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/assistants');
+      const res = await fetch('/api/assistants', { cache: 'no-store' });
       const data = await res.json();
       if (data.success && Array.isArray(data.data)) {
         setAssistants(data.data);
@@ -186,11 +201,15 @@ export default function ReportesPage() {
       updatedList = [newAsist, ...assistants];
 
       try {
-        await fetch('/api/assistants', {
+        const res = await fetch('/api/assistants', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(newAsist),
         });
+        const data = await res.json();
+        if (data.success && data.data) {
+          updatedList = assistants.map((a) => (a.id === newAsist.id ? data.data : a));
+        }
       } catch (err) {
         console.error('API Error creating assistant', err);
       }

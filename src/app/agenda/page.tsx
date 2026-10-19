@@ -53,7 +53,23 @@ export default function AgendaPage() {
   });
 
   const [appointments, setAppointments] = useState<Appointment[]>(DEFAULT_APPOINTMENTS);
+  const [treatmentsList, setTreatmentsList] = useState(initialTreatments);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadTreatments() {
+      try {
+        const res = await fetch('/api/treatments', { cache: 'no-store' });
+        const data = await res.json();
+        if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+          setTreatmentsList(data.data);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    loadTreatments();
+  }, []);
 
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -72,7 +88,7 @@ export default function AgendaPage() {
   const fetchAppointments = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/appointments');
+      const res = await fetch('/api/appointments', { cache: 'no-store' });
       const data = await res.json();
       if (data.success && Array.isArray(data.data)) {
         setAppointments(data.data);
@@ -553,7 +569,7 @@ export default function AgendaPage() {
                   value={treatmentId}
                   onChange={(e) => {
                     setTreatmentId(e.target.value);
-                    const selT = initialTreatments.find((t) => t.id === e.target.value);
+                    const selT = treatmentsList.find((t) => t.id === e.target.value);
                     if (selT) {
                       setDuration(selT.durationMins);
                       setPrice(selT.price);
@@ -561,7 +577,7 @@ export default function AgendaPage() {
                   }}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-500"
                 >
-                  {initialTreatments.map((t) => (
+                  {treatmentsList.map((t) => (
                     <option key={t.id} value={t.id}>
                       {t.name} ({t.category}) - ₡{t.price.toLocaleString()}
                     </option>

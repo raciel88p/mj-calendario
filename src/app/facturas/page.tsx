@@ -53,7 +53,7 @@ export default function FacturasPage() {
   const fetchInvoices = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/facturas');
+      const res = await fetch('/api/facturas', { cache: 'no-store' });
       const data = await res.json();
       if (data.success && data.data) {
         setInvoices(data.data);
@@ -111,7 +111,7 @@ export default function FacturasPage() {
   useEffect(() => {
     async function loadPatients() {
       try {
-        const res = await fetch('/api/patients');
+        const res = await fetch('/api/patients', { cache: 'no-store' });
         const data = await res.json();
         if (data.success && data.data) {
           setPatients(data.data);
@@ -235,7 +235,7 @@ export default function FacturasPage() {
     setTimeout(() => setEmailNotification(null), 3000);
   };
 
-  const handleRegisterAbono = (e: React.FormEvent) => {
+  const handleRegisterAbono = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedInvoice) return;
 
@@ -253,6 +253,20 @@ export default function FacturasPage() {
           : inv
       )
     );
+
+    try {
+      await fetch('/api/facturas', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: selectedInvoice.id,
+          balancePending: newPending,
+          paymentStatus: newStatus,
+        }),
+      });
+    } catch (err) {
+      console.error('Error updating invoice abono in DB:', err);
+    }
 
     setIsAbonoModalOpen(false);
     setEmailNotification(`Abono de ₡${abonoAmount.toLocaleString()} registrado. Comprobante enviado a ${selectedInvoice.email}`);

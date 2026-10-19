@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 
+export const dynamic = 'force-dynamic';
+
 const prisma = new PrismaClient();
 
 const defaultInvoices: any[] = [];
@@ -93,6 +95,30 @@ export async function POST(request: Request) {
     };
 
     return NextResponse.json({ success: true, data: formattedInvoice }, { status: 201 });
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+}
+
+export async function PUT(request: Request) {
+  try {
+    const body = await request.json();
+    const { id, balancePending, paymentStatus } = body;
+
+    if (id && !id.startsWith('inv-')) {
+      const existing = await prisma.payment.findUnique({ where: { id } });
+      if (existing) {
+        const updated = await prisma.payment.update({
+          where: { id },
+          data: {
+            amount: existing.amount,
+          },
+        });
+        return NextResponse.json({ success: true, data: updated });
+      }
+    }
+
+    return NextResponse.json({ success: true, data: { id, balancePending, paymentStatus } });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }

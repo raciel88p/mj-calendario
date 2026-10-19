@@ -32,7 +32,7 @@ export default function PacientesPage() {
   const fetchPatients = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/patients');
+      const res = await fetch('/api/patients', { cache: 'no-store' });
       const data = await res.json();
       if (data.success && data.data) {
         setPatients(data.data);
